@@ -9,7 +9,18 @@ ws.onclose = () => {
 }
 
 ws.onmessage = (payload) => {
-    console.dir(payload);
+    const answer = JSON.parse(payload.data);
+    switch(answer.typeRequest) {
+        case "findUser": 
+            displayData(answer);
+        break;
+
+        default:
+            console.warn("Пришел запрос, который мы не знаем как обработать! ");
+            console.dir(payload.data);
+            break;
+    }
+
 }
 
 
@@ -22,4 +33,15 @@ function tryRegister() {
         phoneNumber: phoneNumber
     }
     ws.send(JSON.stringify(msg));   // надо бы добавить валидацию: создано ли такое ws соединение? 
+}
+
+
+// Вывести данные о найденном пользователе
+function displayData(payload) {
+    const txtElement = document.getElementById('txtaUserInfo');
+    let text = "";
+    Object.keys(payload).forEach((item, index) => {
+        text += `${index}) ${item}: ${payload[item]}\n`;
+    });
+    txtElement.innerHTML = text;
 }

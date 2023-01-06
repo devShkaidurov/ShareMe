@@ -11,26 +11,32 @@ server.on('connection', ws => {
         switch(msg.typeRequest) {
             case 'checkUser':
                 console.dir(msg.phoneNumber);
-                const record = getDataFromDB(msg.phoneNumber);
+                getDataFromDB(msg.phoneNumber).then(record => {
+                     // Отправляем данные обратно в клиент
+                    if(record != undefined && record != null) {
+                        const msgToClient = {
+                            typeRequest: 'findUser',
+                            id: record[0].id,
+                            username: record[0].username,
+                            phone_number: record[0].phone_number,
+                            user_pass: record[0].user_pass,
+                            avatar: record[0].avatar,
+                            lat: record[0].lat,
+                            lon: record[0].lon,
+                            list_friends: record[0].list_friends,
+                        };
+                        ws.send(JSON.stringify(msgToClient));
+                    }
+                }, reject => {
+                    console.dir(reject);
+                }).catch(err => {
+                    console.dir(err);
+                })
                 // ОШИБКА! 
                 // record возвращается пустой! Тк в функции getDataFromDB() он присваивается асинхронно
                 // предполагаю делать через колбеки или промисы
 
-                // Отправляем данные обратно в клиент
-                // if(record != undefined && record != null) {
-                //     console.dir("In record");
-                //     const msgToClient = {
-                //         typeRequest: 'findUser',
-                //         id: record[0].id,
-                //         username: record[0].username,
-                //         phone_number: record[0].phone_number,
-                //         user_pass: record[0].user_pass,
-                //         avatar: record[0].avatar,
-                //         lat: record[0].lat,
-                //         lon: record[0].lon,
-                //         list_friends: record[0].list_friends,
-                //     };
-                //     ws.send(JSON.stringify(msgToClient));
+               
                 // }
                 break;
 
@@ -51,7 +57,6 @@ server.on('error', err => {
     console.dir(err);
 })
 
-
 // ---------------------------- Function for work with databases ---------------------------- //
 
 // Получение данных из базы данных
@@ -59,38 +64,39 @@ server.on('error', err => {
 // Если запись с таким номером не найдена - возвращается пустой массив.
 // Если номер телефона == "" (т.е. юзер не заполнил его), то возвращает все записи из бд (имитирую перегрузку, хз зачем пока, но пусть будет)
 async function getDataFromDB(phone_number) {
-    let record = {}
     const conn = mysql.createConnection(config);
     if(tryConnect(conn)) {
-        if(phone_number == "") {
-            conn.query("select * from user_table", (err, result) => {
-                if(err) {
-                    console.error("Occurs error while we trying to get data from database.");
-                }
+        return new Promise((resolve, reject) => {
+            if(phone_number == "") {
+                conn.query("select * from user_table", (err, result) => {
+                    if(err) {
+                       reject("Occurs error while we trying to get data from database.");
+                    }
+                    else 
+                        resolve(result); // Присваиваение синхронное в асинхронном моменте
+                });
+            } else {
+                conn.query(`select * from user_table where phone_number = '${phone_number}'`, (err, result) => {
+                    if(err) {
+                        reject("Occurs error while we trying to get data from database.");
+                    }
+                    else 
+                        resolve(result); // Присваиваение синхронное в асинхронном моменте
+                });
+            }
+
+            // В любом случае надо закрыть соединение с базой данных
+            conn.end(err => {
+                if(err)
+                    console.error("Connection to database was closed by error.");
                 else 
-                    record = result; // Присваиваение синхронное в асинхронном моменте
-            });
-        } else {
-            conn.query(`select * from user_table where phone_number = '${phone_number}'`, (err, result) => {
-                if(err) {
-                    console.error("Occurs error while we trying to get data from database.");
-                }
-                else 
-                    record = result; // Присваиваение синхронное в асинхронном моменте
-            });
-        }
+                    console.dir("Connection to database was closed.");
+            })
+        });
     }
 
-    // В любом случае надо закрыть соединение с базой данных
-    conn.end(err => {
-        if(err)
-            console.error("Connection to database was closed by error.");
-        else 
-            console.dir("Connection to database was closed.");
-    })
+    
 
-    console.dir(record);
-    return record;
 }
 
 // Подключаемся к бд. 

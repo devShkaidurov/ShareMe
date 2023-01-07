@@ -9,36 +9,76 @@ server.on('connection', ws => {
     ws.onmessage = (payload) => {
         const msg = JSON.parse(payload.data);
         switch(msg.typeRequest) {
-            case 'checkUser':
-                console.dir(msg.phoneNumber);
-                getDataFromDB(msg.phoneNumber).then(record => {
+            case 'checkUserExist':
+                checkExistUser(msg.phoneNumber).then(record => {
                      // Отправляем данные обратно в клиент
-                    if(record != undefined && record != null) {
+                    console.dir(record);
+                    if(record != undefined && record != null && record.length > 0) {
                         const msgToClient = {
-                            typeRequest: 'findUser',
-                            id: record[0].id,
+                            typeRequest: 'checkUser_answer',
                             username: record[0].username,
-                            phone_number: record[0].phone_number,
-                            user_pass: record[0].user_pass,
-                            avatar: record[0].avatar,
                             lat: record[0].lat,
                             lon: record[0].lon,
                             list_friends: record[0].list_friends,
+                            auth: true,
+                            err: ""
+                        };
+                        ws.send(JSON.stringify(msgToClient));
+                    } else {
+                        const msgToClient = {
+                            typeRequest: 'checkUser_answer',
+                            auth: false,
+                            err: "Не найден такой пользователь!"
                         };
                         ws.send(JSON.stringify(msgToClient));
                     }
+
                 }, reject => {
                     console.dir(reject);
+                    const msgToClient = {
+                        typeRequest: 'checkUser_answer',
+                        auth: false,
+                        err: reject
+                    };
+                    ws.send(JSON.stringify(msgToClient));
                 }).catch(err => {
                     console.dir(err);
+                    const msgToClient = {
+                        typeRequest: 'checkUser_answer',
+                        auth: false,
+                        err: err
+                    };
+                    ws.send(JSON.stringify(msgToClient));
                 })
-                // ОШИБКА! 
-                // record возвращается пустой! Тк в функции getDataFromDB() он присваивается асинхронно
-                // предполагаю делать через колбеки или промисы
-
-               
-                // }
                 break;
+
+                case 'tryToRegister':
+                    console.dir(msg);
+                    registerUser(msg.userName, msg.phoneNumber, msg.userPass).then(ans => {
+                        if(ans != null && ans != undefined) {
+                            console.log("Successfull added!");
+                        }
+                    }, reject => {
+                        console.dir(reject);
+                    });
+                    
+                    break;
+
+                case 'tryToEnter':
+                    entryUser(msg.phoneNumber, msg.userPass).then(record => {
+                        if(record != undefined && record != null && record.length > 0) {
+                            const msgToClient = {
+                                typeRequest: 'successAuth',
+                                user: msg.phoneNumber,
+                                auth: true
+                            };
+
+                            ws.send(JSON.stringify(msgToClient));
+                        } else {
+                            console.log("ACCESS IS BLOCK")
+                        }
+                    })
+                    break;
 
             default:
                 console.dir("There are no corresponded actions");
@@ -59,31 +99,19 @@ server.on('error', err => {
 
 // ---------------------------- Function for work with databases ---------------------------- //
 
-// Получение данных из базы данных
-// Если принимает один аргумент - номер телефона, то возвращает найденную запись
-// Если запись с таким номером не найдена - возвращается пустой массив.
-// Если номер телефона == "" (т.е. юзер не заполнил его), то возвращает все записи из бд (имитирую перегрузку, хз зачем пока, но пусть будет)
-async function getDataFromDB(phone_number) {
+// Проверка, существует ли такой пользователь
+async function checkExistUser(phone_number) {
     const conn = mysql.createConnection(config);
     if(tryConnect(conn)) {
         return new Promise((resolve, reject) => {
-            if(phone_number == "") {
-                conn.query("select * from user_table", (err, result) => {
-                    if(err) {
-                       reject("Occurs error while we trying to get data from database.");
-                    }
-                    else 
-                        resolve(result); // Присваиваение синхронное в асинхронном моменте
-                });
-            } else {
-                conn.query(`select * from user_table where phone_number = '${phone_number}'`, (err, result) => {
-                    if(err) {
-                        reject("Occurs error while we trying to get data from database.");
-                    }
-                    else 
-                        resolve(result); // Присваиваение синхронное в асинхронном моменте
-                });
-            }
+            conn.query(`select * from user_table where phone_number = '${phone_number}'`, (err, result) => {
+                if(err) {
+                    reject("Occurs error while we trying to get data from database.");
+                }
+                else 
+                    resolve(result); // Присваиваение синхронное в асинхронном моменте
+            });
+        
 
             // В любом случае надо закрыть соединение с базой данных
             conn.end(err => {
@@ -94,14 +122,59 @@ async function getDataFromDB(phone_number) {
             })
         });
     }
+}
 
-    
+// Регистрируем пользователя
+async function registerUser(user_name, user_phone, user_password) {
+    const conn = mysql.createConnection(config);
+    return new Promise((resolve, reject) => {
+        if(tryConnect(conn)) {
+            conn.query(`INSERT user_table(username, phone_number, user_pass, lat, lon) values ('${user_name}', '${user_phone}', '${user_password}', 52.2323, 50.11111)`, (err, result) => {
+                if(err) {
+                    reject("Error while adding!" + err);
+                } else {
+                    resolve(result);
+                }
+            });
+        } else {
+            reject("Failed connection to database.");
+        }
 
+         // В любом случае надо закрыть соединение с базой данных
+         conn.end(err => {
+            if(err)
+                console.error("Connection to database was closed by error.");
+            else 
+                console.dir("Connection to database was closed.");
+        })
+    })
+}
+
+// Входим с существующей учетной записью (проверяем логин и пароль)
+async function entryUser(user_phone, user_password) {
+    const conn = mysql.createConnection(config);
+    console.log("Props phone: " + user_phone);
+    console.log("Props password: " + user_password);
+    return new Promise((resolve, reject) => {
+        if(tryConnect(conn)) {
+            conn.query(`select * from user_table where phone_number = '${user_phone}' and user_pass = '${user_password}'`, (err, result) => {
+                if(err) {
+                    reject('Error while trying to enter!' + err);
+                } else {
+                    console.log("RESULT:");
+                    console.dir(result);
+                    resolve(result);
+                }
+            });
+        } else {
+            reject("Failed connection to database");
+        }
+    })
 }
 
 // Подключаемся к бд. 
 // Возвращаем true, если подключение удачное. False - если не смогли подключиться 
-async function tryConnect (conn) {
+async function tryConnect(conn) {
     await conn.connect(err => {
         if(err) {
             console.dir("Failed connection to database");

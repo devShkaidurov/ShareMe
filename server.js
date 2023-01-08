@@ -56,7 +56,12 @@ server.on('connection', ws => {
                     console.dir(msg);
                     registerUser(msg.userName, msg.phoneNumber, msg.userPass).then(ans => {
                         if(ans != null && ans != undefined) {
-                            console.log("Successfull added!");
+                            const msgToClient = {
+                                typeRequest: 'successRegister',
+                                user: msg.phoneNumber,
+                                auth: true
+                            };
+                            ws.send(JSON.stringify(msgToClient));
                         }
                     }, reject => {
                         console.dir(reject);
@@ -72,7 +77,6 @@ server.on('connection', ws => {
                                 user: msg.phoneNumber,
                                 auth: true
                             };
-
                             ws.send(JSON.stringify(msgToClient));
                         } else {
                             console.log("ACCESS IS BLOCK")

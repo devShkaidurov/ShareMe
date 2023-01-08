@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './pages/App';
+import './assets/styles/index.css';
 import { Routing } from './routes';
 import { GenProvider } from './contexts/GeneralContext';
 

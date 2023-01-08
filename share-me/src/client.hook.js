@@ -1,20 +1,17 @@
-import {useState, useEffect} from 'react';
+import { useState } from 'react';
 
 export const useClientHook = () => {
-    let isOpen = false;
-    const [isAuthSuccess, setAuthSuccess] = useState(false);
+    // const [isAuthSuccess, setAuthSuccess] = useState(false);
     const [isUserExist, setUserExist] = useState(false);
-
+    const [isSuccessAuth, setSuccessAuth] = useState(false);
     const ws = new WebSocket('ws://localhost:7171');
 
     ws.onopen = () => {
         console.dir("Online");
-        isOpen = true;
     }
 
     ws.onclose = () => {
         console.dir("Offline");
-        isOpen = false;
     }
 
     ws.onmessage = (payload) => {
@@ -23,11 +20,17 @@ export const useClientHook = () => {
         switch(answer.typeRequest) {
             case "checkUser_answer": 
                 if(answer.auth) {
-                    displayData(answer);
-                    // setAuthSuccess(true);
                     setUserExist(true);
                     console.warn("Пользователь найден! Просьба ввести пароль...");
                 } 
+            break;
+
+            case "successAuth":
+                setSuccessAuth(true);
+                break;
+
+            case "successRegister":
+                setSuccessAuth(true);
             break;
 
             default:
@@ -46,19 +49,8 @@ export const useClientHook = () => {
             typeRequest: 'checkUserExist',
             phoneNumber: phone,
         };
-        if(ws.OPEN)
+        if(ws.readyState !== WebSocket.CLOSED)
             ws.send(JSON.stringify(msg));   // надо бы добавить валидацию: создано ли такое ws соединение? 
-    }
-
-
-    // Вывести данные о найденном пользователе
-    function displayData(payload) {
-        const txtElement = document.getElementById('txtaUserInfo');
-        let text = "";
-        Object.keys(payload).forEach((item, index) => {
-            text += `${index}) ${item}: ${payload[item]}\n`;
-        });
-        txtElement.innerHTML = text;
     }
 
     function doRegister(userName, phone, password) {
@@ -71,7 +63,7 @@ export const useClientHook = () => {
             userPass: password
         };
         console.dir(msg);
-        if(ws.OPEN)
+        if(ws.readyState !== WebSocket.CLOSED)
             ws.send(JSON.stringify(msg));
     }
 
@@ -83,14 +75,15 @@ export const useClientHook = () => {
             userPass: password
         };
 
-        if(ws.OPEN)
+        if(ws.readyState !== WebSocket.CLOSED)
             ws.send(JSON.stringify(msg));
     }
 
     return {
         tryAuth,
         isUserExist,
-        isAuthSuccess,
+        // isAuthSuccess,
+        isSuccessAuth,
         doEntry,
         doRegister
     };

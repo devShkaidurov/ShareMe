@@ -3,10 +3,14 @@ import '../assets/styles/App.css';
 import { useClientHook } from '../client.hook';
 import { useEffect, useState} from 'react';
 import { useNavigate } from 'react-router';
-
+import LoginIcon from '@mui/icons-material/Login';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 const AuthPage = () => {
   const {tryAuth, isUserExist, isSuccessAuth, doEntry, doRegister} = useClientHook();
   const [isValidPass, setValidPass] = useState(false);
+  const [isPassword, setIsPassword] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,17 +18,15 @@ const AuthPage = () => {
       navigate('/main');
   }, [isSuccessAuth, navigate]);
 
+  useEffect(() => {
+    if(isUserExist != null)
+      setValidPass(true);
+  }, isUserExist);
 
-
+  // Запросим, есть ли такой пользователь
   const handleAuth = () => {
-    // Скроем кнопку для красоты 
-    const button = document.getElementById('tryEnter');
-    button.style.display = 'none';
-
-    // Запросим, есть ли такой пользователь
     const numberPhone = document.getElementById('phoneInput').value;
     tryAuth(numberPhone);
-    setValidPass(true);
   };
 
   const handleEntry = () => {
@@ -40,36 +42,70 @@ const AuthPage = () => {
     doRegister(username, numberPhone, password);
   };
 
+  const changeTypeInput = () => {
+    if(isPassword)
+      setIsPassword(false);
+    else 
+      setIsPassword(true);
+  }
+
+  const matchPass = () => {
+
+  }
+  
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-         Авторизация
-        </p>
-        <label for="phoneInput">Введите номер телефона</label>
-        <input id="phoneInput" type="text"/><br/>
+        <div id="main_container_auth">
+          <p className="text_">
+          { isUserExist ? "Авторизация" : "Регистрация"}
+          </p>
+          <label for="phoneInput" className="text_">Введите номер телефона</label>
+          <div className="rowInputNumber">
+            <input id="phoneInput" type="text" className="input_"/>
+            <button id="tryEnter" onClick={handleAuth}><ArrowForwardIosIcon/></button>
+          </div>
+          {
+            isValidPass ? 
+              isUserExist ?
+                <div style={{width: '100%', display: 'flex', flexDirection: 'column', flexWrap: 'wrap', alignContent: 'center'}}>
+                  <label for="inputPassEnter" className="text_" style={{marginTop: '25px'}}>Введите пароль</label>
+                  <div className="rowInputNumber">
+                    <input id="inputPassEnter" type={isPassword ? "password" : "text"} className="input_"></input>
+                    <button className="getter-setter-visibility" style={{ right: '11%', marginTop: '5px' }} onClick={changeTypeInput}>
+                      { isPassword ? <VisibilityIcon fontSize ="25px"/> : <VisibilityOffIcon fontSize ="25px"/> }
+                    </button>
+                    <button id="tryEnter" onClick={handleEntry} className="input_"><LoginIcon/></button>
+                  </div>
+                </div> : 
+                <div id="container_auth">
+                  <div id="wrapper_auth_username">
+                    <label for="inputUserName" className="text_"  style={{width: '35%', marginRight: '15px'}}>Придумайте имя пользователя</label>
+                    <input id="inputUserName" type="text" className="input_" style={{width: '25%'}}></input>
+                  </div>
+                  <div id="wrapper_auth_pass">
+                    <label for="inputPassRegister" className="text_" style={{width: '35%', marginRight: '15px'}}>Придумайте пароль </label>
+                    <input id="inputPassRegister" type={isPassword ? "password" : "text"} className="input_" style={{width: '35%'}}></input>
+                    <button className="getter-setter-visibility" style={{ marginBottom: '5px' }} onClick={changeTypeInput}>
+                      { isPassword ? <VisibilityIcon fontSize ="25px"/> : <VisibilityOffIcon fontSize ="25px"/> }
+                    </button>
+                  </div>
 
-        <button id="tryEnter" onClick={handleAuth}>Проверить наличие пользователя</button>
-        {
-          isValidPass ? 
-            isUserExist ?
-              <div>
-                <label for="inputPassEnter">Ввести пароль</label>
-                <input id="inputPassEnter" type="password"></input><br/>
-                <button id="tryEnter" onClick={handleEntry}>Авторизироваться</button>
-              </div> : 
-              <div>
-                <label for="inputUserName">Придумайте имя пользователя</label>
-                <input id="inputUserName" type="text"></input><br/>
+                  <div id="wrapper_auth_pass">
+                    <label for="inputPassRegister" className="text_" style={{width: '35%', marginRight: '15px'}}>Подтвердите пароль</label>
+                    <input id="inputPassRegister" type={isPassword ? "password" : "text"} className="input_" style={{width: '35%'}} onChange={matchPass}></input>
+                    <button className="getter-setter-visibility" style={{ marginBottom: '5px' }} onClick={changeTypeInput}>
+                      { isPassword ? <VisibilityIcon fontSize ="25px"/> : <VisibilityOffIcon fontSize ="25px"/> }
+                    </button>
+                  </div>
 
-                <label for="inputPassRegister">Придумайте пароль</label>
-                <input id="inputPassRegister" type="password"></input><br/>
-                <button id="tryEnter" onClick={handleRegister}>Зарегистрироваться</button>
-              </div> 
-              : null
+                  <button id="tryEnter" style={{marginTop: '25px'}} onClick={handleRegister}><LoginIcon/></button>
+                </div> 
+                : null
 
-        }
+          }
+        </div>
       </header>
     </div>
   );

@@ -3,6 +3,8 @@
 }
 
 .App-logo {
+  position: absolute;
+  top: 0%;
   height: 40vmin;
   pointer-events: none;
 }
@@ -14,7 +16,7 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #16343a;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -36,3 +38,101 @@
     transform: rotate(360deg);
   }
 }
+
+.rowInputNumber {
+  height: 50px;
+  width: 20%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 300px;
+}
+
+.text_ {
+  color: #61dafb;
+  font-weight: 400;
+  font-family: cursive;
+  font-size: xx-large;
+  transition: 1s;
+}
+
+.input_ {
+  border: solid 3px #61dafb;
+  margin-top: 2px;
+  border-radius: 6px;
+  margin-top: 5px;
+  color: #047695;
+  font-weight: bold;
+  font-size: smaller;
+  cursor: auto;
+  font-family: cursive;
+  background: #d5eaf0;
+  transition: 0.5s;
+  width: 75%;
+}
+
+.input_:focus {
+  border: solid 3px #0099c4;
+  border-radius: 6px;
+  outline: none;
+  background: #ffffff;
+}
+
+.input_:hover {
+  scale: 1.01;
+}
+
+
+#tryEnter {
+  cursor: pointer;
+  width: 46px;
+  height: 46px;
+  border-radius: 50px;
+  background: #c8e8f1;
+  outline: none;
+  border-radius: solid 1px #61dafb;
+  border: solid 3px #61dafb;
+  color: #047695;
+  transition: 0.5s;
+  margin-left: 10px;
+}
+
+#tryEnter:hover {
+  scale: 1.05;
+}
+
+
+#container_auth {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  margin-top: 30px;
+}
+
+#wrapper_auth_username {
+  padding: 10px;
+  width: 100%;
+}
+
+#main_container_auth {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 40%;
+}
+
+.getter-setter-visibility {
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  outline: none;
+  background-color: #009ac400;
+  border: none;
+  color: #047695;
+  position: relative;
+  right: 5%;
+}
+

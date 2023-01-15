@@ -5,14 +5,18 @@ const config = require("./config");
 
 server.on('connection', ws => {
     console.dir("Connection was opened.");
-    ws.send("Connection was opened.");
+
+    const commonMessage = {
+        typeRequest: 'connection_state',
+        message: 'Connection was opened.'
+    };
+    ws.send(JSON.stringify(commonMessage));
+
     ws.onmessage = (payload) => {
         const msg = JSON.parse(payload.data);
         switch(msg.typeRequest) {
             case 'checkUserExist':
                 checkExistUser(msg.phoneNumber).then(record => {
-                     // Отправляем данные обратно в клиент
-                    console.dir(record);
                     if(record != undefined && record != null && record.length > 0) {
                         const msgToClient = {
                             typeRequest: 'checkUser_answer',
@@ -58,6 +62,7 @@ server.on('connection', ws => {
                         if(ans != null && ans != undefined) {
                             const msgToClient = {
                                 typeRequest: 'successRegister',
+                                phoneNumber: msg.phoneNumber,
                                 user: msg.phoneNumber,
                                 auth: true
                             };
@@ -74,6 +79,7 @@ server.on('connection', ws => {
                         if(record != undefined && record != null && record.length > 0) {
                             const msgToClient = {
                                 typeRequest: 'successAuth',
+                                phoneNumber: msg.phoneNumber,
                                 user: msg.phoneNumber,
                                 auth: true
                             };
@@ -81,6 +87,15 @@ server.on('connection', ws => {
                         } else {
                             console.log("ACCESS IS BLOCK")
                         }
+                    })
+                    break;
+
+                case 'getFrineds':
+                    console.dir("Current number: " + msg.phoneNumber);
+                    getFrindsByNumber(msg.phoneNumber).then(resolve => {
+                        console.dir(resolve);
+                    }, reject => {
+                        console.dir(reject);
                     })
                     break;
 
@@ -157,8 +172,6 @@ async function registerUser(user_name, user_phone, user_password) {
 // Входим с существующей учетной записью (проверяем логин и пароль)
 async function entryUser(user_phone, user_password) {
     const conn = mysql.createConnection(config);
-    console.log("Props phone: " + user_phone);
-    console.log("Props password: " + user_password);
     return new Promise((resolve, reject) => {
         if(tryConnect(conn)) {
             conn.query(`select * from user_table where phone_number = '${user_phone}' and user_pass = '${user_password}'`, (err, result) => {
@@ -170,6 +183,24 @@ async function entryUser(user_phone, user_password) {
                     resolve(result);
                 }
             });
+        } else {
+            reject("Failed connection to database");
+        }
+    })
+}
+
+// Получаем данные о друзьях пользователя phoneNumber
+async function getFrindsByNumber(phoneNumber) {
+    return new Promise((resolve, reject) => {
+        const conn = mysql.createConnection(config);
+        if(tryConnect(conn)) {
+            conn.query(`select list_friends from user_table where phone_number = '${phoneNumber}'`, (err, result) => {
+                if(err) {
+                    reject(err)
+                } else {
+                    resolve(result);
+                }
+            })
         } else {
             reject("Failed connection to database");
         }

@@ -1,7 +1,6 @@
-import { useContext, createContext } from "react";
+import { useContext, createContext, useState } from "react";
 
 export const GenContext = createContext({
-    numberValue: '',
 });
 
 export const useAuthContext = () => {
@@ -9,8 +8,13 @@ export const useAuthContext = () => {
 };
 
 export const GenProvider = ({ children }) => {
+    const [phoneNumber, setPhoneNumber] = useState("");
     return (
-        <GenContext.Provider>
+        <GenContext.Provider value={{
+            phoneNumber, 
+            setPhoneNumber
+        }
+        }>
             {children}
         </GenContext.Provider>
     )

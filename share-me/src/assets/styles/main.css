@@ -14,3 +14,31 @@ h1 {
     width: 500px;
     z-index: 15;
 }
+
+#map-title {
+    font-family: "DejaVu Sans",sans-serif;
+    font-size: 20px;
+    text-anchor: middle;
+    fill: black;
+  }
+  #map-title-background {fill: yellow;}
+
+/* maparea */
+  #map-background {
+    fill: #a0ffa0;
+    stroke: none;
+  }
+/* map-decoration/grid */
+  #map-grid-line {stroke: #800000;}
+/* map-decoration/border */
+  #map-border-casing{stroke:#400000;stroke-width:2px;}
+  #map-border-core{fill:#a00000;stroke-width:2px;}
+
+/*marginalia*/
+  #map-marginalia-background {fill: #8080ff;}
+/*scale*/
+  #map-scale-casing {stroke:#000000;stroke-width:5px;}
+  #map-scale-core {stroke:#505050;stroke-width:5px;}
+  #map-scale-caption {fill:#f0f0f0;}
+  #map-scale-bookend {stroke:#000000;}
+  #map-scale-caption {fill:#ffffff;}

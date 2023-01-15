@@ -1,6 +1,16 @@
 import '../assets/styles/main.css';
+import myIconImage from '../assets/images/my-icon.png';
+import myIconShadow from '../assets/images/my-icon-shadow.png';
+import { useClientHook } from '../client.hook';
+import { GenContext } from "../contexts/GeneralContext";
+import { useContext } from "react";
 
 const Main = () => {
+    const { getFrineds } = useClientHook();
+    const ContextStructure = useContext(GenContext);
+
+    console.dir("In main: " + ContextStructure.phoneNumber);
+    getFrineds(ContextStructure.phoneNumber);
 
     setTimeout(() => {
         let mapOptions = {
@@ -16,11 +26,11 @@ const Main = () => {
         map.addLayer(layer);
         
         const myIcon = window.L.icon({
-            iconUrl: '../assets/images/my-icon.png',
+            iconUrl: myIconImage,
             iconSize: [38, 95],
             iconAnchor: [22, 94],
             popupAnchor: [-3, -76],
-            shadowUrl: '../assets/images/my-icon-shadow.png',
+            shadowUrl: myIconShadow,
             shadowSize: [68, 95],
             shadowAnchor: [22, 94]
         });

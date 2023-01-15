@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, HashRouter } from 'react-router-dom';
-import App from './pages/AuthPage';
+import AuthPage  from './pages/AuthPage';
 import Main from './pages/Main';
 
 export const Routing = () => {
@@ -8,10 +8,10 @@ export const Routing = () => {
     <HashRouter>
         <Routes>
             <Route>
-                <Route exact path="/" element={<App />} />
+                <Route exact path="/" element={<AuthPage />} />
             </Route>
             <Route>
-                <Route path="/main" element={<Main />} />
+                <Route exact path="/main" element={<Main />} />
             </Route>
         </Routes>
     </HashRouter>

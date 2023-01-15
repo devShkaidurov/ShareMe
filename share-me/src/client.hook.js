@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 export const useClientHook = () => {
-    // const [isAuthSuccess, setAuthSuccess] = useState(false);
-    const [isUserExist, setUserExist] = useState(false);
+    const [isUserExist, setUserExist] = useState(null);
     const [isSuccessAuth, setSuccessAuth] = useState(false);
+
     const ws = new WebSocket('ws://localhost:7171');
 
     ws.onopen = () => {
@@ -15,6 +15,7 @@ export const useClientHook = () => {
     }
 
     ws.onmessage = (payload) => {
+        console.dir(payload.data);
         const answer = JSON.parse(payload.data);
         console.dir(answer);
         switch(answer.typeRequest) {
@@ -22,7 +23,9 @@ export const useClientHook = () => {
                 if(answer.auth) {
                     setUserExist(true);
                     console.warn("Пользователь найден! Просьба ввести пароль...");
-                } 
+                } else {
+                    setUserExist(false);
+                }
             break;
 
             case "successAuth":
@@ -31,6 +34,10 @@ export const useClientHook = () => {
 
             case "successRegister":
                 setSuccessAuth(true);
+            break;
+
+            case 'connection_state': 
+                console.warn(answer.message);
             break;
 
             default:
@@ -49,8 +56,10 @@ export const useClientHook = () => {
             typeRequest: 'checkUserExist',
             phoneNumber: phone,
         };
-        if(ws.readyState !== WebSocket.CLOSED)
-            ws.send(JSON.stringify(msg));   // надо бы добавить валидацию: создано ли такое ws соединение? 
+        if(ws.readyState == WebSocket.OPEN) {
+            console.warn("1");
+            ws.send(JSON.stringify(msg));
+        }
     }
 
     function doRegister(userName, phone, password) {
@@ -63,8 +72,10 @@ export const useClientHook = () => {
             userPass: password
         };
         console.dir(msg);
-        if(ws.readyState !== WebSocket.CLOSED)
+        if(ws.readyState == WebSocket.OPEN) {
+            console.warn("2");
             ws.send(JSON.stringify(msg));
+        }
     }
 
     function doEntry(phone, password) {
@@ -75,16 +86,30 @@ export const useClientHook = () => {
             userPass: password
         };
 
-        if(ws.readyState !== WebSocket.CLOSED)
+        if(ws.readyState == WebSocket.OPEN) {
+            console.warn("3");
             ws.send(JSON.stringify(msg));
+        }
+    }
+
+    function getFrineds(phoneNumber) {
+        const msg = {
+            typeRequest: 'getFrineds',
+            phoneNumber: phoneNumber
+        }    
+
+        if(ws.readyState == WebSocket.OPEN) {
+            console.warn("4");
+            ws.send(JSON.stringify(msg));
+        }
     }
 
     return {
-        tryAuth,
         isUserExist,
-        // isAuthSuccess,
         isSuccessAuth,
+        tryAuth,
         doEntry,
-        doRegister
+        doRegister,
+        getFrineds
     };
 }

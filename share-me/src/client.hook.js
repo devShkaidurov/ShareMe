@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { GenContext, useAuthContext } from "./contexts/GeneralContext";
 
 export const useClientHook = () => {
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [customHook, setCustomHook] = useState(undefined);
     const [isUserExist, setUserExist] = useState(null);
     const [isSuccessAuth, setSuccessAuth] = useState(false);
+    const [infoAboutFriend, setInfoAboutFriends] = useState(undefined);
+    const [ws, setWs] = useState(new WebSocket('ws://localhost:7171'));
 
-    const ws = new WebSocket('ws://localhost:7171');
-
+    
     ws.onopen = () => {
         console.dir("Online");
     }
@@ -15,9 +19,7 @@ export const useClientHook = () => {
     }
 
     ws.onmessage = (payload) => {
-        console.dir(payload.data);
         const answer = JSON.parse(payload.data);
-        console.dir(answer);
         switch(answer.typeRequest) {
             case "checkUser_answer": 
                 if(answer.auth) {
@@ -30,7 +32,7 @@ export const useClientHook = () => {
 
             case "successAuth":
                 setSuccessAuth(true);
-                break;
+            break;
 
             case "successRegister":
                 setSuccessAuth(true);
@@ -38,6 +40,11 @@ export const useClientHook = () => {
 
             case 'connection_state': 
                 console.warn(answer.message);
+            break;
+
+            case 'infoAboutFriends':
+                console.warn(answer.data);
+                setInfoAboutFriends(answer.data);
             break;
 
             default:
@@ -51,65 +58,59 @@ export const useClientHook = () => {
 
     // Функция, вызывающаяся при клике по кнопке "Проверить наличие пользователя"
     function tryAuth(phone) {
-        console.dir("Sending data to server...");
         const msg = {
             typeRequest: 'checkUserExist',
             phoneNumber: phone,
         };
-        if(ws.readyState == WebSocket.OPEN) {
-            console.warn("1");
+
+        if(ws.readyState == WebSocket.OPEN)
             ws.send(JSON.stringify(msg));
-        }
     }
 
     function doRegister(userName, phone, password) {
-        console.dir("Trying register...");
-
         const msg = {
             typeRequest: 'tryToRegister',
             phoneNumber: phone,
             userName: userName,
             userPass: password
         };
-        console.dir(msg);
-        if(ws.readyState == WebSocket.OPEN) {
-            console.warn("2");
+
+        if(ws.readyState == WebSocket.OPEN)
             ws.send(JSON.stringify(msg));
-        }
     }
 
     function doEntry(phone, password) {
-        console.dir("Trying enter...");
         const msg = {
             typeRequest: 'tryToEnter',
             phoneNumber: phone,
             userPass: password
         };
 
-        if(ws.readyState == WebSocket.OPEN) {
-            console.warn("3");
+        if(ws.readyState == WebSocket.OPEN)
             ws.send(JSON.stringify(msg));
-        }
+        
     }
 
-    function getFrineds(phoneNumber) {
+    function getFriends(phoneNumber) {
         const msg = {
-            typeRequest: 'getFrineds',
+            typeRequest: 'getFriends',
             phoneNumber: phoneNumber
         }    
 
-        if(ws.readyState == WebSocket.OPEN) {
-            console.warn("4");
+        if(ws.readyState == WebSocket.OPEN) 
             ws.send(JSON.stringify(msg));
-        }
     }
 
     return {
         isUserExist,
         isSuccessAuth,
+        infoAboutFriend,
+        phoneNumber,
         tryAuth,
         doEntry,
         doRegister,
-        getFrineds
+        getFriends,
+        setInfoAboutFriends,
+        setPhoneNumber
     };
 }

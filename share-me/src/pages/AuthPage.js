@@ -10,44 +10,40 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { GenContext } from "../contexts/GeneralContext";
 
 const AuthPage = () => {
-  const {tryAuth, isUserExist, isSuccessAuth, doEntry, doRegister} = useClientHook();
   const ContextStructure = useContext(GenContext);
   const [isValidPass, setValidPass] = useState(false);
   const [isPassword, setIsPassword] = useState(true);
   const navigate = useNavigate();
-  
-  console.dir(ContextStructure);
 
   useEffect(() => {
-    if(isSuccessAuth) {
+    if(ContextStructure.isSuccessAuth) {
       navigate('/main');
       ContextStructure.setPhoneNumber(document.getElementById('phoneInput').value);
-      console.dir("Go to main (maps) page")
     }
-  }, [isSuccessAuth, navigate]);
+  }, [ContextStructure.isSuccessAuth]);
 
   useEffect(() => {
-    if(isUserExist != null)
+    if(ContextStructure.isUserExist != null)
       setValidPass(true);
-  }, isUserExist);
+  }, ContextStructure.isUserExist);
 
   // Запросим, есть ли такой пользователь
   const handleAuth = () => {
     const numberPhone = document.getElementById('phoneInput').value;
-    tryAuth(numberPhone);
+    ContextStructure.tryAuth(numberPhone);
   };
 
   const handleEntry = () => {
     const numberPhone = document.getElementById('phoneInput').value;
     const password = document.getElementById('inputPassEnter').value; 
-    doEntry(numberPhone, password);
+    ContextStructure.doEntry(numberPhone, password);
   };
 
   const handleRegister = () => {
     const numberPhone = document.getElementById('phoneInput').value;
     const password = document.getElementById('inputPassRegister').value; 
     const username = document.getElementById('inputUserName').value;
-    doRegister(username, numberPhone, password);
+    ContextStructure.doRegister(username, numberPhone, password);
   };
 
   const changeTypeInput = () => {
@@ -67,7 +63,7 @@ const AuthPage = () => {
         <img src={logo} className="App-logo" alt="logo" />
         <div id="main_container_auth">
           <p className="text_">
-          { isUserExist ? "Авторизация" : "Регистрация"}
+          { ContextStructure.isUserExist ? "Авторизация" : "Регистрация"}
           </p>
           <label htmlFor="phoneInput" className="text_">Введите номер телефона</label>
           <div className="rowInputNumber">
@@ -76,7 +72,7 @@ const AuthPage = () => {
           </div>
           {
             isValidPass ? 
-              isUserExist ?
+            ContextStructure.isUserExist ?
                 <div style={{width: '100%', display: 'flex', flexDirection: 'column', flexWrap: 'wrap', alignContent: 'center'}}>
                   <label htmlFor="inputPassEnter" className="text_" style={{marginTop: '25px'}}>Введите пароль</label>
                   <div className="rowInputNumber">

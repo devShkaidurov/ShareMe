@@ -12,8 +12,8 @@ server.on('connection', ws => {
     };
     ws.send(JSON.stringify(commonMessage));
 
-    ws.onmessage = (payload) => {
-        const msg = JSON.parse(payload.data);
+    ws.on('message', (payload) => {
+        const msg = JSON.parse(payload);
         switch(msg.typeRequest) {
             case 'checkUserExist':
                 checkExistUser(msg.phoneNumber).then(record => {
@@ -90,12 +90,40 @@ server.on('connection', ws => {
                     })
                     break;
 
-                case 'getFrineds':
-                    console.dir("Current number: " + msg.phoneNumber);
+                case 'getFriends':
                     getFrindsByNumber(msg.phoneNumber).then(resolve => {
-                        console.dir(resolve);
+                        if(resolve.length > 0) {
+                            const phoneNumbers = resolve[0].list_friends;
+                            getInfoAboutFriends(phoneNumbers).then(resolve => {
+                                const msgToClient = {
+                                    typeRequest: 'infoAboutFriends',
+                                    data: resolve
+                                };
+                                ws.send(JSON.stringify(msgToClient));
+                            }, reject => {
+                                const msgToClient = {
+                                    typeRequest: 'infoAboutFriends',
+                                    data: []
+                                };
+                                console.log("No friends");
+                                ws.send(JSON.stringify(msgToClient));
+                            });
+                        } else {
+                            const msgToClient = {
+                                typeRequest: 'infoAboutFriends',
+                                data: []
+                            };
+                            console.log("No friends");
+                            ws.send(JSON.stringify(msgToClient));
+                        }
+                        
                     }, reject => {
-                        console.dir(reject);
+                        const msgToClient = {
+                            typeRequest: 'infoAboutFriends',
+                            data: []
+                        };
+                        console.log("No friends");
+                        ws.send(JSON.stringify(msgToClient));
                     })
                     break;
 
@@ -103,7 +131,7 @@ server.on('connection', ws => {
                 console.dir("There are no corresponded actions");
                 break;
         };
-    };
+    });
 })
 
 
@@ -189,24 +217,6 @@ async function entryUser(user_phone, user_password) {
     })
 }
 
-// Получаем данные о друзьях пользователя phoneNumber
-async function getFrindsByNumber(phoneNumber) {
-    return new Promise((resolve, reject) => {
-        const conn = mysql.createConnection(config);
-        if(tryConnect(conn)) {
-            conn.query(`select list_friends from user_table where phone_number = '${phoneNumber}'`, (err, result) => {
-                if(err) {
-                    reject(err)
-                } else {
-                    resolve(result);
-                }
-            })
-        } else {
-            reject("Failed connection to database");
-        }
-    })
-}
-
 // Подключаемся к бд. 
 // Возвращаем true, если подключение удачное. False - если не смогли подключиться 
 async function tryConnect(conn) {
@@ -220,4 +230,91 @@ async function tryConnect(conn) {
             return true;
         }
     });
+}
+
+// Получаем данные о друзьях пользователя phoneNumber
+async function getFrindsByNumber(phoneNumber) {
+    return new Promise((resolve, reject) => {
+        const conn = mysql.createConnection(config);
+        if(tryConnect(conn)) {
+            conn.query(`select list_friends from user_table where phone_number = '${phoneNumber}'`, (err, result) => {
+                if(err) {
+                    reject(err)
+                } else {
+                    resolve(result);
+                }
+            })
+        } else {
+            reject("Failed connection to database3");
+        }
+    })
+}
+
+// 1) запросить номера
+// 2) выполнить поиск по этим номерам 
+
+
+async function getInfoAboutFriends(numbers) {
+    return new Promise((resolve, reject)=> {
+        const conn = mysql.createConnection(config);
+        if(tryConnect(conn)) {
+            const friends = [];
+            const split_massive = numbers.split(',');
+            console.dir(split_massive);
+            split_massive.forEach((element) => {
+                const info = {
+                    username: null,
+                    phone_number: element,
+                    avatar: null ,
+                    lat: null,
+                    lon: null,
+                };
+
+                conn.query(`select username from user_table where phone_number = '${element}'`, (err, result) => {
+                if(err) {
+                    friends.push(info);
+                    reject(err)
+                } else {
+                    info.username = result[0].username;
+                    console.dir("Username: " + info.username);
+                        conn.query(`select avatar from user_table where phone_number = '${element}'`, (err, result) => {
+                        if(err) {
+                            friends.push(info);
+                            reject(err)
+                        } else {
+                            info.avatar = result[0].avatar;
+                            console.dir("Avatar: " + info.avatar);
+                                conn.query(`select lat from user_table where phone_number = '${element}'`, (err, result) => {
+                                if(err) {
+                                    friends.push(info);
+                                    reject(err)
+                                } else {
+                                    info.lat = result[0].lat;
+                                    console.dir("Lat: " + info.lat);
+                                        conn.query(`select lon from user_table where phone_number = '${element}'`, (err, result) => {
+                                        if(err) {
+                                            friends.push(info);
+                                            reject(err)
+                                        } else {
+                                            info.lon = result[0].lon;
+                                            console.dir("Lon: " + info.lon);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }});
+                friends.push(info);
+            });
+
+            setTimeout(() => {
+                resolve(friends);
+            }, 100);
+        } else {
+            reject("Cannot execute get info about frineds");
+        }
+    }
+
+    )
 }

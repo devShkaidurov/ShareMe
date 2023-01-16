@@ -1,20 +1,17 @@
 import { useContext, createContext, useState } from "react";
+import { useClientHook } from "../client.hook";
 
 export const GenContext = createContext({
 });
 
 export const useAuthContext = () => {
-    return useContext(GenContext);
+    return GenContext;
 };
 
 export const GenProvider = ({ children }) => {
-    const [phoneNumber, setPhoneNumber] = useState("");
+    const argsHook = useClientHook();
     return (
-        <GenContext.Provider value={{
-            phoneNumber, 
-            setPhoneNumber
-        }
-        }>
+        <GenContext.Provider value={{...argsHook}}>
             {children}
         </GenContext.Provider>
     )

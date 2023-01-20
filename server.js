@@ -127,6 +127,10 @@ server.on('connection', ws => {
                     })
                     break;
 
+                case 'requestFriend':
+                    console.dir(msg);
+                    break;
+
             default:
                 console.dir("There are no corresponded actions");
                 break;
@@ -249,9 +253,6 @@ async function getFrindsByNumber(phoneNumber) {
         }
     })
 }
-
-// 1) запросить номера
-// 2) выполнить поиск по этим номерам 
 
 
 async function getInfoAboutFriends(numbers) {

@@ -47,6 +47,17 @@ export const useClientHook = () => {
                 setInfoAboutFriends(answer.data);
             break;
 
+            case 'addFriend':
+                console.warn('Пришел ответ от сервера на добавления друга!');
+                console.warn('Существует ли такой пользователь? ' + answer.exist + " (Должно быть true)");
+                console.warn('Есть ли он у нас в друзьях? ' + answer.friend + " (Должно быть true)");
+                if(answer.exist && !answer.friend) {
+                    console.warn('Здесь должен быть вызов функции добавления друга!');
+                    console.warn('Путь аватарки друга: ' + answer.friend_avatar);
+                    console.warn('Юзернейм друга: ' + answer.friend_username);
+                }
+            break;
+
             default:
                 console.warn("Пришел запрос, который мы не знаем как обработать! ");
                 console.dir(answer);
@@ -101,6 +112,18 @@ export const useClientHook = () => {
             ws.send(JSON.stringify(msg));
     }
 
+    function sendFriendRequest(myNumber, friendNumber, comment) {
+        const msg = {
+            typeRequest: 'requestFriend',
+            myNumber: myNumber,
+            friendNumber: friendNumber,
+            comment: comment
+        };
+
+        if(ws.readyState == WebSocket.OPEN) 
+            ws.send(JSON.stringify(msg));
+    }
+
     return {
         isUserExist,
         isSuccessAuth,
@@ -111,6 +134,7 @@ export const useClientHook = () => {
         doRegister,
         getFriends,
         setInfoAboutFriends,
-        setPhoneNumber
+        setPhoneNumber,
+        sendFriendRequest
     };
 }

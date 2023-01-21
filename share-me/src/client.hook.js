@@ -58,6 +58,11 @@ export const useClientHook = () => {
                 }
             break;
 
+            case 'err':
+                console.error("Received error message");
+                console.dir(answer.message);
+            break;
+
             default:
                 console.warn("Пришел запрос, который мы не знаем как обработать! ");
                 console.dir(answer);

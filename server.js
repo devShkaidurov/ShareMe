@@ -130,20 +130,13 @@ server.on('connection', ws => {
                 case 'requestFriend':
                         //Promise().then(resolve => {}, reject => {})
                         RequestFrined(msg.myNumber, msg.friendNumber).then(resolve => {
-                            if(resolve.typeRequest!='addFriends') {
-                                console.dir("Friend add error!");
-                                console.dir(resolve.text);
-                                ws.send(JSON.stringify(resolve));
-                            } else {
-                            console.dir("Friend add succuseful!");
+                            console.dir(resolve);
                             ws.send(JSON.stringify(resolve));
-                            }
                         }, reject => {
                             console.dir(reject);
+                            ws.send(JSON.stringify(reject));
                         });
-                  
-                        
-                        break;
+                break;
 
             default:
                 console.dir("There are no corresponded actions");
@@ -167,72 +160,69 @@ async function RequestFrined(myNumber, friendNumber) {
     const conn = mysql.createConnection(config);
     return new Promise((resolve, reject) => {
         if(tryConnect(conn)) {
-            conn.query(`select * from user_table where phone_number = '${friendNumber}'`, (err, result) => { //Существует ли номер добавляемого в базе данных
+            conn.query(`select * from user_table where phone_number = '${friendNumber}'`, (err, result) => { 
                 if(err) {
                     const msgToClient = {
-                        typeRequest: 'ErrorAddFriend',
-                        text: 'Ошибка подключения к базе данных!',
+                        typeRequest: 'err',
+                        message: 'Ошибка подключения к базе данных!',
                         exist: false,
                         friend: false
                     };
                     reject(msgToClient); 
                 } else if(result.length == 0) {
                     const msgToClient = {
-                        typeRequest: 'ErrorAddFriend',
-                        text:'Добавляемого пользователя не существует в системе!',
+                        typeRequest: 'err',
+                        message: 'Добавляемого пользователя не существует в системе!',
                         exist: false,
                         friend: false
                     };
                     reject(msgToClient); 
                 } else if(result.length > 0) {
-                        console.dir(result);
-                        console.dir("User was found, check list friends");
-                        // проверяем, добавлен ли этот друг уже или нет?
-                        conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
-                            if(err) {       
-                                const msgToClient = {
-                                    typeRequest: 'ErrorAddFriend',
-                                    text: 'Ошибка подключения к базе данных!',
-                                    exist: true,
-                                    friend: false
-                                };
-                                reject(msgToClient); 
-                            } else if(result.length == 0) {
-                                const msgToClient = {
-                                    typeRequest: 'AddFriend',
-                                    text: 'Друг найден, можем добавить в друзья',
-                                    exist: true,
-                                    friend: false
-                                };
-                                resolve(msgToClient); 
-                            } else if(result.length > 0) {
-                                const massive_friends = result.split(',');  // список друзей
-                                let i=0;
-                                while(i < massive_friends.length && massive_friends[i] != friendNumber)
-                                    i++;
-                                if(i < massive_friends) {
-                                    const msgToClient = {
-                                        typeRequest: 'ErrorAddFriend',
-                                        text: 'Добавляемый пользователь уже существует в друзьях пользователя!',
-                                        exist: true,
-                                        friend: true,
-                                    }  
-                                    reject(msgToClient); //Если добавляемый уже в списке друзей
-                                } else {
-                                    const msgToClient = {
-                                        typeRequest: 'ErrorAddFriend',
-                                        text: 'Друг найден, можем добавить в друзья',
-                                        exist: true,
-                                        friend: false,
-                                    }  
-                                    resolve(msgToClient); //Если добавляемый уже в списке друзей 
-                                }
-                                
-                                // 1) Добавить заявку в in_friend -> friendNumber
-                                // 2) Добавить заявку в out_friend -> myNumber
+                    console.dir("User was found, check list friends");
+                    conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
+                        if(err) {       
+                            const msgToClient = {
+                                typeRequest: 'err',
+                                message: 'Ошибка подключения к базе данных!',
+                                exist: true,
+                                friend: false
+                            };
+                            reject(msgToClient); 
+                        } else if(result.length == 0) {
+                            const msgToClient = {
+                                typeRequest: 'addFriend',
+                                message: 'Друг найден, можем добавить в друзья',
+                                exist: true,
+                                friend: false
+                            };
+                            resolve(msgToClient); 
+                        } else if(result.length > 0) {
+                            const massive_friends = result[0].list_friends.split(',');  // список друзей
+                            let i=0;
+                            while(i < massive_friends.length && massive_friends[i] != friendNumber)
+                                i++;
 
+                            if(i < massive_friends.length) {
+                                const msgToClient = {
+                                    typeRequest: 'err',
+                                    message: 'Добавляемый пользователь уже существует в друзьях пользователя!',
+                                    exist: true,
+                                    friend: true,
+                                }  
+                                reject(msgToClient); //Если добавляемый уже в списке друзей
+                            } else {
+                                const msgToClient = {
+                                    typeRequest: 'addFriend',
+                                    message: 'Друг найден, можем добавить в друзья',
+                                    exist: true,
+                                    friend: false,
+                                }  
+                                resolve(msgToClient); //Если добавляемый уже в списке друзей 
                             }
-                        }); 
+                            // 1) Добавить заявку в in_friend -> friendNumber
+                            // 2) Добавить заявку в out_friend -> myNumber
+                        }
+                    }); 
                 }
             });
         } else {

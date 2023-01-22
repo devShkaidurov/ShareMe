@@ -1,14 +1,13 @@
-import { useContext, useState } from 'react';
-import { GenContext, useAuthContext } from "./contexts/GeneralContext";
+import { useState } from 'react';
 
 export const useClientHook = () => {
     const [phoneNumber, setPhoneNumber] = useState("");
-    const [customHook, setCustomHook] = useState(undefined);
+    const [username, setUsername] = useState();
     const [isUserExist, setUserExist] = useState(null);
     const [isSuccessAuth, setSuccessAuth] = useState(false);
     const [infoAboutFriend, setInfoAboutFriends] = useState(undefined);
     const [ws, setWs] = useState(new WebSocket('ws://localhost:7171'));
-
+    const [outReqFriends, setOutReqFriends] = useState([]);
     
     ws.onopen = () => {
         console.dir("Online");
@@ -24,6 +23,7 @@ export const useClientHook = () => {
             case "checkUser_answer": 
                 if(answer.auth) {
                     setUserExist(true);
+                    setUsername(answer.username);
                     console.warn("Пользователь найден! Просьба ввести пароль...");
                 } else {
                     setUserExist(false);
@@ -48,14 +48,15 @@ export const useClientHook = () => {
             break;
 
             case 'addFriend':
-                console.warn('Пришел ответ от сервера на добавления друга!');
-                console.warn('Существует ли такой пользователь? ' + answer.exist + " (Должно быть true)");
-                console.warn('Есть ли он у нас в друзьях? ' + answer.friend + " (Должно быть true)");
-                if(answer.exist && !answer.friend) {
-                    console.warn('Здесь должен быть вызов функции добавления друга!');
-                    console.warn('Путь аватарки друга: ' + answer.friend_avatar);
-                    console.warn('Юзернейм друга: ' + answer.friend_username);
-                }
+                setOutReqFriends(prevState => [...prevState, {
+                    isExist: answer.exist,
+                    isFriend: answer.friend,
+                    message: answer.message,    
+                    usernameFriend: answer.usernameFriend,
+                    avatarFriend: answer.avatarFriend,
+                    numberFriend: answer.numberFriend,
+                    comment: answer.comment
+                }]);
             break;
 
             case 'err':
@@ -134,6 +135,8 @@ export const useClientHook = () => {
         isSuccessAuth,
         infoAboutFriend,
         phoneNumber,
+        outReqFriends,
+        username,
         tryAuth,
         doEntry,
         doRegister,

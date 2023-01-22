@@ -129,7 +129,7 @@ server.on('connection', ws => {
 
                 case 'requestFriend':
                         //Promise().then(resolve => {}, reject => {})
-                        RequestFrined(msg.myNumber, msg.friendNumber).then(resolve => {
+                        RequestFrined(msg.myNumber, msg.friendNumber, msg.comment).then(resolve => {
                             console.dir(resolve);
                             ws.send(JSON.stringify(resolve));
                         }, reject => {
@@ -156,7 +156,7 @@ server.on('error', err => {
 })
 
 // ---------------------------- Function for work with databases ---------------------------- //
-async function RequestFrined(myNumber, friendNumber) {
+async function RequestFrined(myNumber, friendNumber, comment) {
     const conn = mysql.createConnection(config);
     return new Promise((resolve, reject) => {
         if(tryConnect(conn)) {
@@ -179,6 +179,7 @@ async function RequestFrined(myNumber, friendNumber) {
                     reject(msgToClient); 
                 } else if(result.length > 0) {
                     console.dir("User was found, check list friends");
+                    const {username, avatar} = result[0];
                     conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
                         if(err) {       
                             const msgToClient = {
@@ -193,7 +194,11 @@ async function RequestFrined(myNumber, friendNumber) {
                                 typeRequest: 'addFriend',
                                 message: 'Друг найден, можем добавить в друзья',
                                 exist: true,
-                                friend: false
+                                friend: false,
+                                usernameFriend: username,
+                                avatarFriend: avatar,
+                                numberFriend: friendNumber,
+                                comment: comment
                             };
                             resolve(msgToClient); 
                         } else if(result.length > 0) {
@@ -216,6 +221,10 @@ async function RequestFrined(myNumber, friendNumber) {
                                     message: 'Друг найден, можем добавить в друзья',
                                     exist: true,
                                     friend: false,
+                                    usernameFriend: username,
+                                    avatarFriend: avatar,
+                                    numberFriend: friendNumber,
+                                    comment: comment
                                 }  
                                 resolve(msgToClient); //Если добавляемый уже в списке друзей 
                             }

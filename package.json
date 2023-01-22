@@ -1,7 +1,7 @@
 {
   "name": "shareme-test",
   "version": "1.0.0",
-  "description": "",
+  "description": "This application lets share location with your friends!",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -13,5 +13,13 @@
     "create-react-app": "^5.0.1",
     "mysql": "^2.18.1",
     "ws": "^8.11.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devShkaidurov/ShareMe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devShkaidurov/ShareMe/issues"
+  },
+  "homepage": "https://github.com/devShkaidurov/ShareMe#readme"
 }

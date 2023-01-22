@@ -21,10 +21,8 @@
 }
 
 .modal_content { 
-    padding: 20px;
-    border-radius: 12px;
-    background-color: rgb(23, 151, 72);
-    border: solid 1px rgb(9, 56, 24);
+    border-radius: 25px;
+    background-color: rgb(255, 255, 255);
     transform: scale(0.5);
     transition: 0.4s all;
     z-index: 1000;

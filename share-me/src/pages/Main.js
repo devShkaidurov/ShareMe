@@ -21,6 +21,9 @@ const Main = () => {
     let map;
     const [infoFriends, setInfoEFriends] = useState([]);
     const [activeModal, setActiveModal] = useState(false);
+    const [isOpenFriend, setIsOpenFriend] = useState(false);
+    const [typeFriend, setTypeFriend] = useState();      // for modal in open friend
+    const [indexFriend, setIndexFriend] = useState();    // for modal in open friend
 
     useEffect(() => {
         ContextStructure.getFriends(ContextStructure.phoneNumber);
@@ -87,33 +90,73 @@ const Main = () => {
         const friendNumber = document.getElementById('inputNumber_modal').value;
         const comment = document.getElementById('inputComment_modal').value;
         ContextStructure.sendFriendRequest(ContextStructure.phoneNumber, friendNumber, comment);
+        setActiveModal(false);
+        document.getElementById('inputNumber_modal').value = "";
+        document.getElementById('inputComment_modal').value = "";
     }
 
+    const handleOpenFriend = (e) => {
+        setIndexFriend(e.target.id[e.target.id.length - 1]);
+        setTypeFriend(e.target.id.match("current") ? "current" : e.target.id.match("in") ? "in" : "out");
+        setIsOpenFriend(true);
+    }
+
+    useEffect(() => {
+        console.dir(ContextStructure.outReqFriends);
+    }, [ContextStructure.outReqFriends]);
+
+ 
     return (
         <div id="container">
+        <div id="label_welcome">Добро пожаловать, {ContextStructure.username}</div>
              <div id="listFriends">
+                <div className="labelForOutRequest" style={{ marginTop: '3px' }}>Список друзей</div>
+                <div className="divider"></div>
                 {
-                    infoFriends.length > 0 ? 
-                    infoFriends.map((friend, index) => {
-                        return (
-                            <div key={index + "containerDiv"}>
-                                <div className="row" key={index + "row"}>
-                                    <img className="avatar" src={friend.avatar} key={index + "avatar"}></img>
-                                    <div className="username" key={index + "username"}>{friend.username}</div>
+                    infoFriends && infoFriends.length > 0 ? 
+                        infoFriends.map((friend, index) => {
+                            return (
+                                <div key={index + "containerDiv"}>
+                                    <div className="row" key={index + "row"}  id={"current_row" + index} onClick={handleOpenFriend}>
+                                        <img className="avatar" src={friend.avatar} id={"current_avatar" + index}  key={index + "avatar"}></img>
+                                        <div className="username" key={index + "username"} id={"current_username" + index} >{friend.username}</div>
+                                    </div>
+                                    <div className="divider" key={index + "divider"}></div>
                                 </div>
-                                <div className="divider" key={index + "divider"}></div>
-                            </div>
-                        )
-                    })
+                            )
+                        })
                     :
-                        null
+                        <>
+                            <div className="divider"></div>
+                            <div className="labelForOutRequest">Пусто</div>
+                        </>
                 }
+                <div className="labelForOutRequest" style={{ marginTop: '15px' }}>Исходящие запросы</div>
+                <div className="divider"></div>
+                {
+                    ContextStructure.outReqFriends.length > 0 ?
+                        ContextStructure.outReqFriends.map((friend, index) => {
+                            return (
+                                <div key={index + "containerDiv"}>
+                                    <div className="row" style={{opacity: '0.5'}}  id={"out_friend_row" + index} key={index + "row"} onClick={handleOpenFriend}>
+                                        <img className="avatar" src={friend.avatarFriend} key={index + "avatar"} id={"out_friend_avatar" + index} ></img>
+                                        <div className="username" key={index + "username"} id={"out_friend_username" + index} >{friend.usernameFriend}</div>
+                                    </div>
+                                    <div className="divider" key={index + "divider"}></div>
+                                </div>
+                            )
+                        })
+                    :
+                        <div className="labelForOutRequest">Пусто</div>
+                }
+
              </div>
 
              <div id="row_to_add_friend" onClick={handleAddFriend}>
                     <div id="img_to_add_friend"><AddIcon/></div>
                     <div id="label_to_add_friend">Добавить друга!</div>
             </div>
+            {/* Add a new friend MODAL */}
             <Modal activeModal={activeModal} setActiveModal={setActiveModal}>
                 <div id="container_modal">
                     <div id="title_modal">Добавить нового друга!</div>
@@ -131,6 +174,33 @@ const Main = () => {
                     <button id="btn_modal" onClick={sendFriendRequest}>Отправить запрос дружбы!</button>
                 </div>
             </Modal>
+
+            {/* open friend MODAL */}
+            <Modal activeModal={isOpenFriend} setActiveModal={setIsOpenFriend}>
+               {
+                typeFriend == "current" ?
+                    <div className="container_open_friend">
+                        <img src={infoFriends[indexFriend].avatar} className="avatar_open_friend"></img>
+                        <div className="username_open_friend">Имя: {infoFriends[indexFriend].username}</div>
+                        <div className="phoneNumber_open_friend">Номер телефона: {infoFriends[indexFriend].phone_number}</div>
+                        <div style={{width: '100%', display: 'flex', justifyContent: 'space-around'}}>
+                            <button className="sendMsg_open_friend">Написать сообщение</button>
+                            <button className="sendMsg_open_friend">Удалить из друзей</button>
+                        </div>
+                    </div>
+                :
+                    typeFriend == "out" ?
+                        <div className="container_open_friend">
+                            <img src={ContextStructure.outReqFriends[indexFriend].avatarFriend} className="avatar_open_friend"></img>
+                            <div className="username_open_friend">Имя: {ContextStructure.outReqFriends[indexFriend].usernameFriend}</div>
+                            <div className="phoneNumber_open_friend"> Номер телефона: {ContextStructure.outReqFriends[indexFriend].numberFriend}</div>
+                            <div className="comment_open_friend">Ваше сообщение: {ContextStructure.outReqFriends[indexFriend].comment}</div>
+                        </div>
+                    :
+                        <div>Входящая заявка</div>
+               }
+            </Modal>
+
             <div id="map"></div>
         </div>
     )

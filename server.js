@@ -225,7 +225,7 @@ async function RequestFrined(myNumber, friendNumber, comment) {
 
                                     
                                     let result_json_in; 
-                                     
+                                    console.log("String will be parsed: " + result[0].in_friend_req);
                                     if(result[0].in_friend_req != null) {
                                         result_json_in = JSON.parse(result[0].in_friend_req);
                                         result_json_in.requests.push(JSON.stringify(in_request));
@@ -264,14 +264,14 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                                     let result_json_out; 
                                                     if(result[0].out_friend_req != null) {
                                                         console.log("String which wii be convert to json: " + result[0].out_friend_req);
-                                                        const res = result[0].out_friend_req.substring(14, result[0].out_friend_req.length - 3);
+                                                        const res = result[0].out_friend_req.substring(15, result[0].out_friend_req.length - 4);
                                                         const newres = res.replace(/(")/g, "'");
-                                                        //console.dir(result[0].out_friend_req.substring(0, 14));
-                                                        //console.dir(newres);
-                                                        //console.dir(result[0].out_friend_req.substring(result[0].out_friend_req.length - 3, result[0].out_friend_req.length));
-                                                        const res_finally = result[0].out_friend_req.substring(0, 14).concat(newres).concat(result[0].out_friend_req.substring(result[0].out_friend_req.length - 3, result[0].out_friend_req.length));
-                                                        console.log("Prepared string: " + res_finally);
-                                                        result_json_out = JSON.parse(res_finally);
+                                                        const res_finally = result[0].out_friend_req.substring(0, 15).concat(newres).concat(result[0].out_friend_req.substring(result[0].out_friend_req.length - 4, result[0].out_friend_req.length));
+                                                        const newnewres = res_finally.replace(/(\\)/g, '');
+                                                        const aaa = newnewres.substring(1, newnewres.length - 1);
+                                                        console.log("Prepared string: " + aaa);
+                                                        result_json_out = JSON.parse(aaa);
+                                                        console.dir(result_json_out);
                                                         result_json_out.requests.push(JSON.stringify(req_out));
                                                     } else {
                                                         result_json_out = {requests: []};

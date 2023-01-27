@@ -41,13 +41,10 @@ const Main = () => {
             map = new window.L.map('map' , mapOptions);
             let layer = new window.L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: 'Share me maps',
-                minZoom: 7,
+                minZoom: 3,
                 maxZoom: 15
             });
             map.addLayer(layer);
-        
-            let marker = new window.L.Marker([51.958, 9.141], {icon: myIcon});
-            marker.addTo(map);
 
             const tempArr = [];
             ContextStructure.infoAboutFriend.forEach(friend => {

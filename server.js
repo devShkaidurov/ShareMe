@@ -225,13 +225,12 @@ async function RequestFrined(myNumber, friendNumber, comment) {
 
                                     
                                     let result_json_in; 
-                                    console.log("String will be parsed: " + result[0].in_friend_req);
                                     if(result[0].in_friend_req != null) {
                                         result_json_in = JSON.parse(result[0].in_friend_req);
-                                        result_json_in.requests.push(JSON.stringify(in_request));
+                                        result_json_in.requests.push(in_request);
                                     } else {
                                         result_json_in = {requests: []};
-                                        result_json_in.requests.push(JSON.stringify(in_request));
+                                        result_json_in.requests.push(in_request);
                                     }
 
                                     conn.query(`UPDATE user_table SET in_friend_req ='${JSON.stringify(result_json_in)}' where phone_number='${friendNumber}'`, (err, result) => {
@@ -242,6 +241,7 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                                 exist: true,
                                                 friend: false
                                             };
+                                            console.log(err)
                                             reject(msgToClient); 
                                         } else {
                                             console.log("Successfull addding to in_req in database");
@@ -263,21 +263,12 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                                     
                                                     let result_json_out; 
                                                     if(result[0].out_friend_req != null) {
-                                                        console.log("String which wii be convert to json: " + result[0].out_friend_req);
-                                                        const res = result[0].out_friend_req.substring(15, result[0].out_friend_req.length - 4);
-                                                        const newres = res.replace(/(")/g, "'");
-                                                        const res_finally = result[0].out_friend_req.substring(0, 15).concat(newres).concat(result[0].out_friend_req.substring(result[0].out_friend_req.length - 4, result[0].out_friend_req.length));
-                                                        const newnewres = res_finally.replace(/(\\)/g, '');
-                                                        const aaa = newnewres.substring(1, newnewres.length - 1);
-                                                        console.log("Prepared string: " + aaa);
-                                                        result_json_out = JSON.parse(aaa);
-                                                        console.dir(result_json_out);
-                                                        result_json_out.requests.push(JSON.stringify(req_out));
+                                                        result_json_out = JSON.parse(result[0].out_friend_req);
+                                                        result_json_out.requests.push(req_out);
                                                     } else {
                                                         result_json_out = {requests: []};
-                                                        result_json_out.requests.push(JSON.stringify(req_out));
+                                                        result_json_out.requests.push(req_out);
                                                     }
-                                                    result_json_out = JSON.stringify(result_json_out).replace(/(')/g, '"');
                                                     conn.query(`UPDATE user_table SET out_friend_req ='${JSON.stringify(result_json_out)}' where phone_number='${myNumber}'`, (err, result) => {
                                                         if(err) {
                                                             console.dir(err);

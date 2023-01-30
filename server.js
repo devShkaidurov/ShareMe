@@ -138,6 +138,32 @@ server.on('connection', ws => {
                         });
                 break;
 
+                case 'deleteFriend':
+                        //Promise().then(resolve => {}, reject => {})
+                        DeleteFrined(msg.myNumber, msg.friendNumber).then(
+                        resolve => {
+                            console.dir(resolve);
+                            ws.send(JSON.stringify(resolve));
+                        }, 
+                        reject => {
+                            console.dir(reject);
+                            ws.send(JSON.stringify(reject));
+                        });
+                break;
+
+                case 'accpetFriend':
+                        //Promise().then(resolve => {}, reject => {})
+                        AcceptFrined(msg.myNumber, msg.friendNumber).then(
+                        resolve => {
+                            console.dir(resolve);
+                            ws.send(JSON.stringify(resolve));
+                        }, 
+                        reject => {
+                            console.dir(reject);
+                            ws.send(JSON.stringify(reject));
+                        });
+                break;
+
             default:
                 console.dir("There are no corresponded actions");
                 break;
@@ -156,12 +182,197 @@ server.on('error', err => {
 })
 
 // ---------------------------- Function for work with databases ---------------------------- //
+//Функция добавления в друзья 
+async function AcceptFrined(myNumber, friendNumber) {
+    const conn = mysql.createConnection(config);
+    return new Promise((resolve, reject) => 
+    {
+        if(tryConnect(conn)) 
+        {
+            conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
+            if(err)
+                {
+                    const msgToClient = {
+                        typeRequest: 'err',
+                        message: 'Ошибка подключения к базе данных!',
+                    };
+                    reject(msgToClient); 
+                }
+            else
+                { 
+                    if(result!=0)
+                    {
+                        massive_friends=result[0].list_friends.split(',');
+                    }
+                    else { massive_friends=[];}
+                    massive_friends.push(friendNumber);
+                    conn.query(`UPDATE user_table SET list_friends ='${massive_friends.toString()}' where phone_number='${myNumber}'`, (err, result) => {
+                    if(err)
+                    {
+                        const msgToClient = {
+                            typeRequest: 'err',
+                            message: 'Ошибка подключения к базе данных!',
+                        };
+                        reject(msgToClient); 
+                    } else {
+                        conn.query(`select out_friend_req from user_table where phone_number = '${myNumber}'`, (err, result) => {
+                            if(err) {       
+                                const msgToClient = {
+                                    typeRequest: 'err',
+                                    message: 'Ошибка подключения к базе данных!',
+                                };
+                                reject(msgToClient);     
+                            } else {
+                                console.dir(result);
+                                result_json_out = JSON.parse(result[0].out_friend_req);
+                                let i=0;
+                                while(i<result_json_out.requests.length && result_json_out.requests[i].phoneNumber!=friendNumber)
+                                i++;
+                                if(i<result_json_out.requests.length)
+                                {
+                                    result_json_out.requests.splice(i,1);
+                                }
+                                conn.query(`UPDATE user_table SET out_friend_req ='${JSON.stringify(result_json_out)}' where phone_number='${myNumber}'`, (err, result) => {
+                                    if(err)
+                                    {
+                                        const msgToClient = {
+                                            typeRequest: 'err',
+                                            message: 'Ошибка подключения к базе данных!',
+                                        };
+                                        reject(msgToClient); 
+                                    }else{
+                                        conn.query(`select in_friend_req from user_table where phone_number = '${friendNumber}'`, (err, result) => {
+                                            if(err) {       
+                                                const msgToClient = {
+                                                    typeRequest: 'err',
+                                                    message: 'Ошибка подключения к базе данных!',
+                                                };
+                                                reject(msgToClient);     
+                                            }else
+                                            {
+                                                result_json_in = JSON.parse(result[0].in_friend_req);
+                                                console.log(result_json_in);////
+                                                let i=0;
+                                                while(i<result_json_in.requests.length && result_json_in.requests[i].phoneNumber!=myNumber)
+                                                i++;
+                                                if(i<result_json_in.requests.length)
+                                                {
+                                                    result_json_in.requests.splice(i,1);
+                                                }
+                                                conn.query(`UPDATE user_table SET in_friend_req ='${JSON.stringify(result_json_in)}' where phone_number='${friendNumber}'`, (err, result) => {
+                                                    if(err)
+                                                    {
+                                                        const msgToClient = {
+                                                            typeRequest: 'err',
+                                                            message: 'Ошибка подключения к базе данных!',
+                                                        };
+                                                        reject(msgToClient); 
+                                                    }else
+                                                    {
+                                                        const msgToClient={
+                                                            typeRequest:'AddFriend'
+                                                        }
+                                                        resolve(msgToClient);
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                            }
+                        });   
+                    }
+
+                    });
+                }
+
+
+            });
+
+        } else {
+            reject("Failed connection to database");
+        }
+        
+    });
+}
+
+
+// Функция удаления друга
+async function DeleteFrined(myNumber, friendNumber) {
+     const conn = mysql.createConnection(config);
+     return new Promise((resolve, reject) => {
+         if(tryConnect(conn)) 
+         {
+            conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
+                if(err)
+                {
+                    const msgToClient = {
+                        typeRequest: 'err',
+                        message: 'Ошибка подключения к базе данных!',
+                    };
+                    reject(msgToClient); 
+                } else  if(result.length!=0)// Можно и не проверять ==0 потому, метод будет работать по нажатию на кнопку удаления в списке друзей(если список пуст то и кнопки не будет)
+                        {
+                            let massive_friends = result[0].list_friends.split(','); 
+                            let i=0;
+                            while(i < massive_friends.length && massive_friends[i] != friendNumber)
+                            i++;
+                            
+                            if(i < massive_friends.length) // по сути тоже не нужна
+                            {
+                                massive_friends.splice(i,1);
+                                console.log(massive_friends.length);
+                                if(massive_friends.length==0)
+                                {
+                                    conn.query(`UPDATE user_table SET list_friends = null where phone_number='${myNumber}'`, (err, result) => {
+                                        if(err)
+                                        {
+                                            const msgToClient = {
+                                                typeRequest: 'err',
+                                                message: 'Ошибка подключения к базе данных!',
+                                            };
+                                            reject(msgToClient); 
+                                        } else {
+                                            const msgToClient = {
+                                                typeRequest: 'FriendDelete',};
+                                            resolve(msgToClient);}
+        
+                                        });
+                                }else
+                                {
+                                    conn.query(`UPDATE user_table SET list_friends = '${massive_friends.toString()}' where phone_number='${myNumber}'`, (err, result) => {
+                                    if(err)
+                                    {
+                                        const msgToClient = {
+                                            typeRequest: 'err',
+                                            message: 'Ошибка подключения к базе данных!',
+                                        };
+                                        reject(msgToClient); 
+                                    } else {
+                                        const msgToClient = {
+                                            typeRequest: 'FriendDelete',};
+                                        resolve(msgToClient);
+                                    }
+
+                                    });
+                                }
+                            }
+                        }
+            });
+
+        } else {
+            reject("Failed connection to database");
+        }
+     });
+};
+
+// Функция запроса на добавления в друзья
 async function RequestFrined(myNumber, friendNumber, comment) {
     const conn = mysql.createConnection(config);
     return new Promise((resolve, reject) => {
         if(tryConnect(conn)) {
             conn.query(`select * from user_table where phone_number = '${friendNumber}'`, (err, result) => { 
-                
                 if(err) {
                     const msgToClient = {
                         typeRequest: 'err',
@@ -180,7 +391,7 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                     reject(msgToClient); 
                 } else if(result.length > 0) {
                     console.dir("Friend was found => check list friends");
-                    const {username, avatar} = result[0];
+                    const {username, avatar} = result[0]; // вопрос?
                     conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
                         if(err) {       
                             const msgToClient = {
@@ -190,9 +401,8 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                 friend: false
                             };
                             reject(msgToClient); 
-                        }  else if(result.length >= 0) {
-                            if(result.length!=0)
-                            {
+                        } else if(result.length >= 0) {
+                            if(result.length != 0) {
                                 const massive_friends = result[0].list_friends.split(',');  // список друзей
                                 let i=0;
                                 while(i < massive_friends.length && massive_friends[i] != friendNumber)
@@ -208,7 +418,7 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                     reject(msgToClient); //Если добавляемый уже в списке друзей
                                 } 
                             }
-
+                            
                             // 1) Добавить заявку в in_friend -> friendNumber
                             conn.query(`select in_friend_req from user_table where phone_number = '${friendNumber}'`, (err, result) => {
                                 if(err) {       
@@ -219,66 +429,61 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                         friend: false
                                     };
                                     reject(msgToClient);     
-                                }else {
-                                    const req_in = {
-                                        FromPhoneNumber:myNumber,
-                                        comment:comment 
-                                    } 
-                                    if(result[0].in_friend_req==null)
-                                    {
-                                        // const req_in_mas = [];
-                                        // req_in_mas.push(JSON.stringify(req_in));
-                                        conn.query(`UPDATE user_table SET in_friend_req ='${JSON.stringify(req_in) + "|"}' where phone_number='${friendNumber}'`, (err, result) => {
-                                            if(err) {
-                                                const msgToClient = {
-                                                    typeRequest: 'err',
-                                                    message: 'Ошибка подключения к базе данных!',
-                                                    exist: true,
-                                                    friend: false
-                                                };
-                                                reject(msgToClient); 
-                                            }    
-                                        });
+                                } else {
+                                    const in_request = {
+                                        phoneNumber: myNumber,
+                                        comment: comment 
+                                    };
+
+                                    
+                                    let result_json_in; 
+                                    if(result[0].in_friend_req != null) {
+                                        result_json_in = JSON.parse(result[0].in_friend_req);
+                                        result_json_in.requests.push(in_request);// вопрос?
+                                    } else {
+                                        result_json_in = {requests: []};
+                                        result_json_in.requests.push(in_request);
                                     }
-                                    else{
-                                        conn.query(`select in_friend_req from user_table where phone_number = '${friendNumber}'`, (err, result) => {
-                                            if(err) {
-                                                const msgToClient = {
-                                                    typeRequest: 'err',
-                                                    message: 'Ошибка подключения к базе данных!',
-                                                    exist: true,
-                                                    friend: false
-                                                };
-                                                reject(msgToClient); 
-                                            }
-                                            else 
-                                            {
-                                                const isExist=false;
-                                                const massive=result[0].in_friend_req.split('|');
-                                                // const arrayJSON = Array.from(result[0].in_friend_req);
-                                                // console.dir("/////////////////////"+arrayJSON);
-                                                massive.forEach((element) => {
-                                                    console.log(element);
-                                                    console.log(JSON.parse(element));
-                                                    if(JSON.parse(element).FromPhoneNumber==myNumber) 
-                                                    {
-                                                        
-                                                        const msgToClient = {
-                                                            typeRequest: 'err',
-                                                            message: 'in_req:Заявка уже отпралена',
-                                                            exist: true,
-                                                            friend: false
-                                                        };
-                                                        console.dir("in_req:Заявка уже отпралена");
-                                                        reject(msgToClient); 
-                                                    }
-                                                });
-                                                if(!isExist)
-                                                {
+
+                                    conn.query(`UPDATE user_table SET in_friend_req ='${JSON.stringify(result_json_in)}' where phone_number='${friendNumber}'`, (err, result) => {
+                                        if(err) {
+                                            const msgToClient = {
+                                                typeRequest: 'err',
+                                                message: 'Ошибка подключения к базе данных!',
+                                                exist: true,
+                                                friend: false
+                                            };
+                                            console.log(err)
+                                            reject(msgToClient); 
+                                        } else {
+                                            console.log("Successfull addding to in_req in database");
+                                            // 2) Добавить заявку в out_friend -> myNumber
+                                            conn.query(`select out_friend_req from user_table where phone_number = '${myNumber}'`, (err, result) => {
+                                                if(err) {       
+                                                    const msgToClient = {
+                                                        typeRequest: 'err',
+                                                        message: 'Ошибка подключения к базе данных!',
+                                                        exist: true,
+                                                        friend: false
+                                                    };
+                                                    reject(msgToClient);     
+                                                } else {
+                                                    const req_out = {
+                                                        phoneNumber: friendNumber,
+                                                        comment: comment 
+                                                    };
                                                     
-                                                    result=result[0].in_friend_req + " | " + JSON.stringify(req_in);
-                                                    conn.query(`UPDATE user_table SET in_friend_req ='${result}' where phone_number='${friendNumber}'`, (err, result) => {
+                                                    let result_json_out; 
+                                                    if(result[0].out_friend_req != null) {
+                                                        result_json_out = JSON.parse(result[0].out_friend_req);
+                                                        result_json_out.requests.push(req_out);
+                                                    } else {
+                                                        result_json_out = {requests: []};
+                                                        result_json_out.requests.push(req_out);
+                                                    }
+                                                    conn.query(`UPDATE user_table SET out_friend_req ='${JSON.stringify(result_json_out)}' where phone_number='${myNumber}'`, (err, result) => {
                                                         if(err) {
+                                                            console.dir(err);
                                                             const msgToClient = {
                                                                 typeRequest: 'err',
                                                                 message: 'Ошибка подключения к базе данных!',
@@ -286,109 +491,32 @@ async function RequestFrined(myNumber, friendNumber, comment) {
                                                                 friend: false
                                                             };
                                                             reject(msgToClient); 
-                                                        }
-                                                    }); 
-                                                }  
-                                            }
-                                        });
-                                    }
-                                }
-                            }          
-                            );
+                                                        } else {
+                                                            console.log("Successfull addding to out_req in database");
+                                                            const msgToClient = {
+                                                                typeRequest: 'addFriend',
+                                                                message: 'Друг найден, добавили в друзья',
+                                                                exist: true,
+                                                                friend: false,
+                                                                usernameFriend: username,
+                                                                avatarFriend: avatar,
+                                                                numberFriend: friendNumber,
+                                                                comment: comment
+                                                            };
 
-                             // 2) Добавить заявку в out_friend -> myNumber
-                             conn.query(`select out_friend_req from user_table where phone_number = '${myNumber}'`, (err, result) => {
-                                if(err) {       
-                                    const msgToClient = {
-                                        typeRequest: 'err',
-                                        message: 'Ошибка подключения к базе данных!',
-                                        exist: true,
-                                        friend: false
-                                    };
-                                    reject(msgToClient);     
-                                }else {
-                                    const req_out = {
-                                        WhoPhoneNumber:friendNumber,
-                                        comment:comment 
-                                    } 
-                                    if(result[0].out_friend_req==null)
-                                    {
-                                        conn.query(`UPDATE user_table SET out_friend_req ='${JSON.stringify(req_out)+ ' | ' }' where phone_number='${myNumber}'`, (err, result) => {
-                                            if(err) {
-                                                const msgToClient = {
-                                                    typeRequest: 'err',
-                                                    message: 'Ошибка подключения к базе данных!',
-                                                    exist: true,
-                                                    friend: false
-                                                };
-                                                reject(msgToClient); 
-                                            }    
-                                        });
-                                    }
-                                    else{
-                                        conn.query(`select out_friend_req from user_table where phone_number = '${myNumber}'`, (err, result) => {
-                                            if(err) {
-                                                const msgToClient = {
-                                                    typeRequest: 'err',
-                                                    message: 'Ошибка подключения к базе данных!',
-                                                    exist: true,
-                                                    friend: false
-                                                };
-                                                reject(msgToClient); 
-                                            }
-                                            else 
-                                            {
-                                                const isExist=false;
-                                                const massive=result[0].out_friend_req.split(' | ');
-                                                massive.forEach((element) => {
-                                                    if(JSON.parse(element).WhoPhoneNumbe==friendNumber)
-                                                    {
-                                                       
-                                                        const msgToClient = {
-                                                            typeRequest: 'err',
-                                                            message: 'out_req:Заявка уже отпралена',
-                                                            exist: true,
-                                                            friend: false
-                                                        };
-                                                        reject(msgToClient); 
-                                                    }
-                                                });
-                                                result=result[0].out_friend_req + " | " + JSON.stringify(req_out);
-                                                conn.query(`UPDATE user_table SET out_friend_req ='${result}' where phone_number='${myNumber}'`, (err, result) => {
-                                                    if(err) {
-                                                        const msgToClient = {
-                                                            typeRequest: 'err',
-                                                            message: 'Ошибка подключения к базе данных!',
-                                                            exist: true,
-                                                            friend: false
-                                                        };
-                                                        reject(msgToClient); 
-                                                    }
-                                                    else
-                                                    {
-                                                        const msgToClient = {
-                                                            typeRequest: 'addFriends', ///&&&
-                                                            message: 'Успешное добавление',
-                                                            exist: true,
-                                                            friend: true
-                                                        };
-                                                    }
-                                                });   
-                                            }
-                                        });
-                                    }
+                                                            resolve(msgToClient); 
+                                                        }    
+                                                    });
+                                                }
+                                            });
+                                        }    
+                                    });
                                 }
-                            });
-                               
-                            console.dir("end!");
+                            })
                         }
                     }); 
                 }
             });
-            
-            setTimeout(() => {
-                resolve(friends);
-            }, 100);
         } else {
             reject("Failed connection to database");
         }
@@ -521,6 +649,8 @@ async function getInfoAboutFriends(numbers) {
                     friends.push(info);
                     reject(err)
                 } else {
+                    console.log("USERNAME VALIDATION");
+                    console.dir(result);
                     info.username = result[0].username;
                     console.dir("Username: " + info.username);
                         conn.query(`select avatar from user_table where phone_number = '${element}'`, (err, result) => {
@@ -564,51 +694,3 @@ async function getInfoAboutFriends(numbers) {
 
     )
 }
-
-//////////////////////////////////
-
-// Function to add in_req, out_req 
-// if(!isFrined)
-                            // {
-                            //     //запрашиваем список входящих заявок друга
-                            //     conn.query(`select in_friend_req from user_table where phone_number = '${friendNumber}'`, (err, result) => {
-                            //     if(!err) {      
-                            //         result = result[0].in_friend_req + myNumber.toString();
-                            //         conn.query(`UPDATE user_table SET in_friend_req ='${result}' where phone_number='${friendNumber}'`, (err, result) => {
-                            //         if(err) {
-                            //             const msgToClient= {
-                            //                 typeRequest:'OtherError',
-                            //                 text:'OtherError: ' + err}
-                            //             reject(msgToClient);
-                            //         } else{
-                            //                 conn.query(`select out_friend_req from user_table where phone_number = '${myNumber}'`, (err, result) => {
-                            //                     console.dir("/////4")
-                            //                 if(err)
-                            //                 {
-                            //                     const msgToClient= {
-                            //                         typeRequest:'OtherError',
-                            //                         text:'OtherError: ' + err}
-                            //                     reject(msgToClient);
-                            //                 } else {
-                            //                         console.dir("+++"+ result)
-                            //                         result=result[0].out_friend_req+friendNumber.toString();
-                            //                         conn.query(`UPDATE user_table SET out_friend_req ='${result}' where phone_number='${myNumber}'`, (err, result) => {
-                            //                             console.dir("/////6")
-                            //                         if(err) {
-                            //                             const msgToClient= {
-                            //                                 typeRequest:'OtherError',
-                            //                                 text:'OtherError: ' + err}
-                            //                             reject(msgToClient);
-                            //                         } else {
-                            //                             const msgToClient = {
-                            //                             typeRequest: 'addFriend',
-                            //                             exist: true,
-                            //                             friend: false,
-                            //                             friend_avatar: 0,
-                            //                             friend_username:0, };
-                            //                             resolve(msgToClient)
-                            //                         }});
-                            //                 }});
-                            //         }});
-                            //     }});
-                            // }

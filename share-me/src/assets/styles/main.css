@@ -280,3 +280,20 @@ h1 {
   font-size: 13pt;
   background-color: #F0D024;
 }
+
+#viewDiv {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.btnCancel {
+  border: none;
+  background: none;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}

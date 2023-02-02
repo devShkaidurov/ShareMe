@@ -1,81 +1,159 @@
 import '../assets/styles/main.css';
-import myIconImage from '../assets/images/my-icon.png';
-import myIconShadow from '../assets/images/my-icon-shadow.png';
-// import myAva from '../assets/images/avatars/avatar_egor.jpg';
 import { GenContext } from "../contexts/GeneralContext";
 import { useContext, useEffect, useState } from "react";
 import AddIcon from '@mui/icons-material/Add';
 import Modal from '../libs/Modal/modal_display.jsx';
+import { useNavigate } from 'react-router';
+import Map from "@arcgis/core/Map";
+import esriRequest from "@arcgis/core/request";
+import Color from "@arcgis/core/renderers/PointCloudClassBreaksRenderer";
+import SceneView from "@arcgis/core/views/SceneView";
+import BaseTileLayer from "@arcgis/core/layers/BaseTileLayer";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import Graphic from "@arcgis/core/Graphic";
+import ClearIcon from '@mui/icons-material/Clear';
+import IconSymbol3DLayer from "@arcgis/core/symbols/IconSymbol3DLayer";
 
 const Main = () => {
     const ContextStructure = useContext(GenContext);
-    const myIcon = window.L.icon({
-        iconUrl: myIconImage,
-        iconSize: [38, 95],
-        iconAnchor: [22, 94],
-        popupAnchor: [-3, -76],
-        shadowUrl: myIconShadow,
-        shadowSize: [68, 95],
-        shadowAnchor: [22, 94]
-    });
-    let map;
-    const [infoFriends, setInfoEFriends] = useState([]);
+    const [infoFriends, setInfoFriends] = useState([]);
     const [activeModal, setActiveModal] = useState(false);
     const [isOpenFriend, setIsOpenFriend] = useState(false);
     const [typeFriend, setTypeFriend] = useState();      // for modal in open friend
     const [indexFriend, setIndexFriend] = useState();    // for modal in open friend
+    const navigate = useNavigate();
+    const [graphicsLayer, setGraphicsLayer] = useState();
+    let TintLayer;
+
+    function createMap() {
+        TintLayer = BaseTileLayer.createSubclass({
+            properties: {
+              urlTemplate: null,
+              tint: {
+                value: null,
+                type: Color
+              }
+            },
+  
+            getTileUrl: function (level, row, col) {
+              return this.urlTemplate
+                .replace("{z}", level)
+                .replace("{x}", col)
+                .replace("{y}", row);
+            },
+  
+            fetchTile: function (level, row, col, options) {
+              const url = this.getTileUrl(level, row, col);
+  
+              return esriRequest(url, {
+                responseType: "image",
+                signal: options && options.signal
+              }).then(
+                function (response) {
+                  const image = response.data;
+                  const width = this.tileInfo.size[0];
+                  const height = this.tileInfo.size[0];
+  
+                  const canvas = document.createElement("canvas");
+                  const context = canvas.getContext("2d");
+                  canvas.width = width;
+                  canvas.height = height;
+  
+                  if (this.tint) {
+                    context.fillStyle = this.tint.toCss();
+                    context.fillRect(0, 0, width, height);
+  
+                    context.globalCompositeOperation = "difference";
+                  }
+  
+                  context.drawImage(image, 0, 0, width, height);
+  
+                  return canvas;
+                }.bind(this)
+              );
+            }
+          });
+    }
+
+    function createMapPart2() {
+        const stamenTileLayer = new TintLayer({
+            urlTemplate:
+              "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          });
+  
+         
+          // add the new instance of the custom tile layer the map
+          const map = new Map({
+            layers: [stamenTileLayer]
+          });
+  
+          const _graphicsLayer = new GraphicsLayer();
+          setGraphicsLayer(_graphicsLayer);
+          map.add(_graphicsLayer);
+          // create a new scene view and add the map
+          const view = new SceneView({
+            container: "viewDiv",
+            map: map,
+            center: {
+                latitude: '53.22361308554965',
+                longitude: '50.2148368711263'
+              },
+              zoom: 12,
+            environment: {
+              lighting: {
+                type: "virtual"
+              }
+            }
+          });
+          view.ui.components = ([]);
+    }
+
 
     useEffect(() => {
+        createMap();
+        createMapPart2();
+    }, []);
+ 
+    useEffect(() => {
+        if(ContextStructure && ContextStructure.isSuccessAuth == false) 
+            navigate('/');
         ContextStructure.getFriends(ContextStructure.phoneNumber);
     }, []);
 
     useEffect(() => {
         console.dir(ContextStructure.infoAboutFriend);
+        graphicsLayer?.removeAll();
         if(ContextStructure.infoAboutFriend && ContextStructure.infoAboutFriend.length > 0) {
-            let mapOptions = {
-                center:[53.228430415931896, 50.22644302684405],
-                zoom: 12,
-                keyboard: false
-            };
-        
-            map = new window.L.map('map' , mapOptions);
-            let layer = new window.L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: 'Share me maps',
-                minZoom: 3,
-                maxZoom: 15
-            });
-            map.addLayer(layer);
-
             const tempArr = [];
+            
             ContextStructure.infoAboutFriend.forEach(friend => {
-                const currIcon = window.L.icon({
-                    iconUrl: friend.avatar,
-                    iconSize: [46, 46],
-                    iconAnchor: [21, 46],
-                    popupAnchor: [0, -46],
-                    shadowUrl: myIconShadow,
-                    shadowSize: [35, 46],
-                    shadowAnchor: [10, 46],
-                    className: 'style_for_icon'
-                });
-                let marker1 = new window.L.Marker([friend.lat, friend.lon], {icon: currIcon});
-                marker1.addTo(map);
+                const point = {
+                    type: "point", 
+                    latitude: friend.lat,
+                    longitude: friend.lon
+                  };
+            
+                  const markerSymbol = {
+                    type: "point-3d", 
+                    symbolLayers: [{
+                        type: "icon", 
+                        size: 25, 
+                        resource: { href: friend.avatar }
+                    }]
+                  };
+
+                  const pointGraphic = new Graphic({
+                    geometry: point,
+                    symbol: markerSymbol
+                  });
+            
+                  graphicsLayer.add(pointGraphic);
+
                 tempArr.push(friend);
             });
 
-            setInfoEFriends(tempArr);
-
-        } else if(ContextStructure.infoAboutFriend && ContextStructure.infoAboutFriend.length == 0) {
-            let mapOptions = {
-                center:[53.228430415931896, 50.22644302684405],
-                zoom: 12,
-                keyboard: false
-            };
-        
-            let map = new window.L.map('map' , mapOptions);
-            let layer = new window.L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-            map.addLayer(layer);
-        };
+            setInfoFriends(tempArr);
+        }
     }, [ContextStructure.infoAboutFriend]);
 
 
@@ -86,7 +164,7 @@ const Main = () => {
     const sendFriendRequest = () => {
         const friendNumber = document.getElementById('inputNumber_modal').value;
         const comment = document.getElementById('inputComment_modal').value;
-        ContextStructure.sendFriendRequest(ContextStructure.phoneNumber, friendNumber, comment);
+        ContextStructure.sendFriendRequest(ContextStructure.phoneNumber, friendNumber, comment, ContextStructure.avatar);
         setActiveModal(false);
         document.getElementById('inputNumber_modal').value = "";
         document.getElementById('inputComment_modal').value = "";
@@ -102,6 +180,26 @@ const Main = () => {
         console.dir(ContextStructure.outReqFriends);
     }, [ContextStructure.outReqFriends]);
 
+
+    // Отменить заявку
+    const handleCancelRequest = (event) => {
+        event.stopPropagation();            // чтобы событие клика не проходило дальше и открывало модалку, останавливаем пропагинацию
+        const index = event?.target?.id;
+        if(index) {
+            console.warn("Отмена заявки...");
+            ContextStructure.RejectFriend(ContextStructure.phoneNumber, ContextStructure.outReqFriends[index].phoneNumber);
+        } 
+    }
+
+    const handleDeleteFriend = (event) => {
+        const index = event?.target?.id;
+        if(index) {
+            console.warn("Удаление из друзей...");
+            setIsOpenFriend(false);
+            // Надо доделать на сервере 
+            ContextStructure.DeleteFriend(ContextStructure.phoneNumber,infoFriends[index].phone_number)
+        }
+    }
  
     return (
         <div id="container">
@@ -116,7 +214,7 @@ const Main = () => {
                                 <div key={index + "containerDiv"}>
                                     <div className="row" key={index + "row"}  id={"current_row" + index} onClick={handleOpenFriend}>
                                         <img className="avatar" src={friend.avatar} id={"current_avatar" + index}  key={index + "avatar"}></img>
-                                        <div className="username" key={index + "username"} id={"current_username" + index} >{friend.username}</div>
+                                        <div className="username" key={index + "username"} id={"current_username" + index}>{friend.username}</div>
                                     </div>
                                     <div className="divider" key={index + "divider"}></div>
                                 </div>
@@ -136,8 +234,9 @@ const Main = () => {
                             return (
                                 <div key={index + "containerDiv"}>
                                     <div className="row" style={{opacity: '0.5'}}  id={"out_friend_row" + index} key={index + "row"} onClick={handleOpenFriend}>
-                                        <img className="avatar" src={friend.avatarFriend} key={index + "avatar"} id={"out_friend_avatar" + index} ></img>
-                                        <div className="username" key={index + "username"} id={"out_friend_username" + index} >{friend.usernameFriend}</div>
+                                        <img className="avatar" src={'../' + friend.avatar} key={index + "avatar"} id={"out_friend_avatar" + index} ></img>
+                                        <div className="username" key={index + "username"} id={"out_friend_username" + index} style={{ width: 'calc(85% - 50px)'}}>{friend.username}</div>
+                                        <div className="btnCancel" onClick={handleCancelRequest} id={index}><ClearIcon id={index} fontSize="small"/></div>
                                     </div>
                                     <div className="divider" key={index + "divider"}></div>
                                 </div>
@@ -177,28 +276,28 @@ const Main = () => {
                {
                 typeFriend == "current" ?
                     <div className="container_open_friend">
-                        <img src={infoFriends[indexFriend].avatar} className="avatar_open_friend"></img>
-                        <div className="username_open_friend">Имя: {infoFriends[indexFriend].username}</div>
-                        <div className="phoneNumber_open_friend">Номер телефона: {infoFriends[indexFriend].phone_number}</div>
+                        <img src={infoFriends[indexFriend]?.avatar} className="avatar_open_friend"></img>
+                        <div className="username_open_friend">Имя: {infoFriends[indexFriend]?.username}</div>
+                        <div className="phoneNumber_open_friend">Номер телефона: {infoFriends[indexFriend]?.phone_number}</div>
                         <div style={{width: '100%', display: 'flex', justifyContent: 'space-around'}}>
                             <button className="sendMsg_open_friend">Написать сообщение</button>
-                            <button className="sendMsg_open_friend">Удалить из друзей</button>
+                            <button className="sendMsg_open_friend" onClick={handleDeleteFriend} id={indexFriend}>Удалить из друзей</button>
                         </div>
                     </div>
                 :
                     typeFriend == "out" ?
                         <div className="container_open_friend">
-                            <img src={ContextStructure.outReqFriends[indexFriend].avatarFriend} className="avatar_open_friend"></img>
-                            <div className="username_open_friend">Имя: {ContextStructure.outReqFriends[indexFriend].usernameFriend}</div>
-                            <div className="phoneNumber_open_friend"> Номер телефона: {ContextStructure.outReqFriends[indexFriend].numberFriend}</div>
-                            <div className="comment_open_friend">Ваше сообщение: {ContextStructure.outReqFriends[indexFriend].comment}</div>
+                            <img src={"../" + ContextStructure.outReqFriends[indexFriend]?.avatar} className="avatar_open_friend"></img>
+                            <div className="username_open_friend">Имя: {ContextStructure.outReqFriends[indexFriend]?.username}</div>
+                            <div className="phoneNumber_open_friend"> Номер телефона: {ContextStructure.outReqFriends[indexFriend]?.phoneNumber}</div>
+                            <div className="comment_open_friend">Ваше сообщение: {ContextStructure.outReqFriends[indexFriend]?.comment}</div>
                         </div>
                     :
                         <div>Входящая заявка</div>
                }
             </Modal>
 
-            <div id="map"></div>
+            <div id="viewDiv" ></div>
         </div>
     )
 }

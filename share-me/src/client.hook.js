@@ -6,10 +6,11 @@ export const useClientHook = () => {
     const [isUserExist, setUserExist] = useState(null);
     const [isSuccessAuth, setSuccessAuth] = useState(false);
     const [infoAboutFriend, setInfoAboutFriends] = useState(undefined);
-    const [ws, setWs] = useState(new WebSocket('ws://localhost:7171'));
+    const [ws, setWs] = useState(new WebSocket('ws://192.168.0.107:7171'));
     const [outReqFriends, setOutReqFriends] = useState([]);
     const [inReqFriends, setInReqFriends] = useState([]);
     const [avatar, setAvatar] = useState();
+
     ws.onopen = () => {
         console.dir("Online");
     }
@@ -26,8 +27,8 @@ export const useClientHook = () => {
                 if(answer.auth) {
                     setUserExist(true);
                     setUsername(answer.username);
-                    setOutReqFriends(answer.outFriendRequest.requests);
-                    setInReqFriends(answer.inFriendRequest.requests);
+                    setOutReqFriends(answer.outFriendRequest?.requests);
+                    setInReqFriends(answer.inFriendRequest?.requests);
                     setAvatar(answer.avatar);
                     console.warn("Пользователь найден! Просьба ввести пароль...");
                 } else {
@@ -53,15 +54,31 @@ export const useClientHook = () => {
             break;
 
             case 'addFriend':
-                setOutReqFriends(prevState => [...prevState, {
-                    isExist: answer.exist,
-                    isFriend: answer.friend,
-                    message: answer.message,    
-                    usernameFriend: answer.usernameFriend,
-                    avatarFriend: answer.avatarFriend,
-                    numberFriend: answer.numberFriend,
-                    comment: answer.comment
-                }]);
+                console.dir(answer);
+                console.dir(outReqFriends);
+                setOutReqFriends(prevState => {
+                    if(prevState) {
+                        return [...prevState, {
+                            isExist: answer.exist,
+                            isFriend: answer.friend,
+                            message: answer.message,    
+                            username: answer.username,
+                            avatar: answer.avatar,
+                            phoneNumber: answer.phoneNumber,
+                            comment: answer.comment
+                        }]
+                    } else {
+                        return [{
+                            isExist: answer.exist,
+                            isFriend: answer.friend,
+                            message: answer.message,    
+                            username: answer.username,
+                            avatar: answer.avatar,
+                            phoneNumber: answer.phoneNumber,
+                            comment: answer.comment
+                        }]
+                    }
+                });
             break;
 
             case 'friendDeleted':
@@ -70,8 +87,18 @@ export const useClientHook = () => {
             break;
 
             case 'rejectFriend':
+                // В объекте answer приходит тип события и номер отклоненной заявки 
+                // Шерстим все исходящие заявки и отклоняем ту, у которой номер совпадает с пришедшем объектом
+                console.dir(outReqFriends);
+                console.dir(inReqFriends);
+                setOutReqFriends(prevState => prevState.filter(item => item.phoneNumber != answer.receiver));
+                setInReqFriends(prevState => prevState.filter(item => item.phoneNumber != answer.sender));
+            break;
+
+            case 'friendSuccessfulAccepted':
                 console.dir(answer);
             break;
+
 
             case 'err':
                 console.error("Received error message");
@@ -139,7 +166,7 @@ export const useClientHook = () => {
             friendNumber: friendNumber,
             comment: comment,
             myAvatar: myAvatar,
-            username: username
+            myUsername: username
         };
 
         if(ws.readyState == WebSocket.OPEN) 
@@ -188,6 +215,7 @@ export const useClientHook = () => {
         outReqFriends,
         username,
         avatar,
+        inReqFriends,
         tryAuth,
         doEntry,
         doRegister,

@@ -12,7 +12,7 @@ import BaseTileLayer from "@arcgis/core/layers/BaseTileLayer";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Graphic from "@arcgis/core/Graphic";
 import ClearIcon from '@mui/icons-material/Clear';
-import IconSymbol3DLayer from "@arcgis/core/symbols/IconSymbol3DLayer";
+import CheckIcon from '@mui/icons-material/Check';
 
 const Main = () => {
     const ContextStructure = useContext(GenContext);
@@ -171,17 +171,24 @@ const Main = () => {
     }
 
     const handleOpenFriend = (e) => {
+        console.dir(e);
+        console.dir(e.target.id.match("current") ? "current" : e.target.id.match("in") ? "in" : "out");
+        console.dir(e.target.id[e.target.id.length - 1]);
         setIndexFriend(e.target.id[e.target.id.length - 1]);
         setTypeFriend(e.target.id.match("current") ? "current" : e.target.id.match("in") ? "in" : "out");
         setIsOpenFriend(true);
     }
 
     useEffect(() => {
+        console.dir(ContextStructure.inReqFriends);
+    }, [ContextStructure.inReqFriends]);
+
+    useEffect(() => {
         console.dir(ContextStructure.outReqFriends);
     }, [ContextStructure.outReqFriends]);
 
 
-    // Отменить заявку
+    // Отменить свою заявку (работает корректно)
     const handleCancelRequest = (event) => {
         event.stopPropagation();            // чтобы событие клика не проходило дальше и открывало модалку, останавливаем пропагинацию
         const index = event?.target?.id;
@@ -191,20 +198,44 @@ const Main = () => {
         } 
     }
 
+    // Удалить друга (надо доделать на сервере)
     const handleDeleteFriend = (event) => {
         const index = event?.target?.id;
         if(index) {
             console.warn("Удаление из друзей...");
             setIsOpenFriend(false);
-            // Надо доделать на сервере 
-            ContextStructure.DeleteFriend(ContextStructure.phoneNumber,infoFriends[index].phone_number)
+            ContextStructure.DeleteFriend(ContextStructure.phoneNumber, infoFriends[index].phone_number) // Надо доделать на сервере 
         }
     }
- 
+
+    // Принять друга (не работает) 
+    const handleAcceptFriend = (event) => {
+        event.stopPropagation();            // чтобы событие клика не проходило дальше и открывало модалку, останавливаем пропагинацию
+        const index = event?.target?.id;
+        if(index) {
+            console.warn("Принятие заявки в друзья");
+            setIsOpenFriend(false);
+            ContextStructure.AcceptFriend(ContextStructure.phoneNumber, ContextStructure.inReqFriends[index].phoneNumber)
+        }
+    }
+
+    // Отменить поступившую заявку в друзья (работает корректно)
+    const handleRejectRequest = (event) => {
+        event.stopPropagation();            // чтобы событие клика не проходило дальше и открывало модалку, останавливаем пропагинацию
+        const index = event?.target?.id;
+        if(index) {
+            console.warn("Отклонение заявки в друзья");
+            setIsOpenFriend(false);
+            ContextStructure.RejectFriend(ContextStructure.inReqFriends[index].phoneNumber, ContextStructure.phoneNumber)
+        }
+    }
+
     return (
         <div id="container">
         <div id="label_welcome">Добро пожаловать, {ContextStructure.username}</div>
              <div id="listFriends">
+
+                {/* Блок текущих друзей */}
                 <div className="labelForOutRequest" style={{ marginTop: '3px' }}>Список друзей</div>
                 <div className="divider"></div>
                 {
@@ -226,10 +257,11 @@ const Main = () => {
                             <div className="labelForOutRequest">Пусто</div>
                         </>
                 }
+                {/* Блок исходящих запросов */}
                 <div className="labelForOutRequest" style={{ marginTop: '15px' }}>Исходящие запросы</div>
                 <div className="divider"></div>
                 {
-                    ContextStructure.outReqFriends.length > 0 ?
+                    ContextStructure.outReqFriends && ContextStructure.outReqFriends.length > 0 ?
                         ContextStructure.outReqFriends.map((friend, index) => {
                             return (
                                 <div key={index + "containerDiv"}>
@@ -246,13 +278,37 @@ const Main = () => {
                         <div className="labelForOutRequest">Пусто</div>
                 }
 
-             </div>
+                {/* Блок входящих запросов */}
+                <div className="labelForOutRequest" style={{ marginTop: '15px' }}>Входящие запросы</div>
+                <div className="divider"></div>
+                    {
+                        ContextStructure.inReqFriends && ContextStructure.inReqFriends.length > 0 ?
+                            ContextStructure.inReqFriends.map((friend, index) => {
+                                return (
+                                    <div key={index + "containerDiv"}>
+                                        <div className="row" style={{opacity: '0.5'}}  id={"in_friend_row" + index} key={index + "row"} onClick={handleOpenFriend}>
+                                            <img className="avatar" src={'../' + friend.avatar} key={index + "avatar"} id={"in_friend_avatar" + index} ></img>
+                                            <div className="username" key={index + "username"} id={"in_friend_username" + index} style={{ width: 'calc(85% - 50px)'}}>{friend.username}</div>
+                                            <div className="btnCancel" onClick={handleAcceptFriend} id={index}><CheckIcon id={index} fontSize="small"/></div>
+                                            <div className="btnCancel" onClick={handleRejectRequest} id={index}><ClearIcon id={index} fontSize="small"/></div>
+                                        </div>
+                                        <div className="divider" key={index + "divider"}></div>
+                                    </div>
+                                )
+                            })
+                        :
+                            <div className="labelForOutRequest">Пусто</div>
+                    }
 
+                </div>
+
+            {/* Блок "Добавить друга" */}
              <div id="row_to_add_friend" onClick={handleAddFriend}>
                     <div id="img_to_add_friend"><AddIcon/></div>
                     <div id="label_to_add_friend">Добавить друга!</div>
             </div>
-            {/* Add a new friend MODAL */}
+
+            {/* Модалка для добавления нового друга */}
             <Modal activeModal={activeModal} setActiveModal={setActiveModal}>
                 <div id="container_modal">
                     <div id="title_modal">Добавить нового друга!</div>
@@ -271,7 +327,7 @@ const Main = () => {
                 </div>
             </Modal>
 
-            {/* open friend MODAL */}
+            {/* Модалка открытия друга */}
             <Modal activeModal={isOpenFriend} setActiveModal={setIsOpenFriend}>
                {
                 typeFriend == "current" ?
@@ -293,7 +349,14 @@ const Main = () => {
                             <div className="comment_open_friend">Ваше сообщение: {ContextStructure.outReqFriends[indexFriend]?.comment}</div>
                         </div>
                     :
-                        <div>Входящая заявка</div>
+                     typeFriend == "in" ?
+                        <div className="container_open_friend">
+                            <img src={"../" + ContextStructure.inReqFriends[indexFriend]?.avatar} className="avatar_open_friend"></img>
+                            <div className="username_open_friend">Имя: {ContextStructure.inReqFriends[indexFriend]?.username}</div>
+                            <div className="phoneNumber_open_friend"> Номер телефона: {ContextStructure.inReqFriends[indexFriend]?.phoneNumber}</div>
+                            <div className="comment_open_friend">Входящее сообщение: {ContextStructure.inReqFriends[indexFriend]?.comment}</div>
+                        </div>
+                    : null
                }
             </Modal>
 

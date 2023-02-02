@@ -165,7 +165,7 @@ server.on('connection', ws => {
                         });
                 break;
 
-                case 'accpetFriend':
+                case 'acceptFriend':
                         AcceptFriend(msg.myNumber, msg.friendNumber).then(resolve => {
                             console.dir(resolve);
                             ws.send(JSON.stringify(resolve));
@@ -206,17 +206,17 @@ async function AcceptFriend(myNumber, friendNumber) {
         if(tryConnect(conn)) {
             conn.query(`select list_friends from user_table where phone_number = '${myNumber}'`, (err, result) => {
             if(err) {
-                    const msgToClient = {
-                        typeRequest: 'err',
-                        message: 'Ошибка подключения к базе данных!',
-                    };
-                    reject(msgToClient); 
+                const msgToClient = {
+                    typeRequest: 'err',
+                    message: 'Ошибка подключения к базе данных!',
+                };
+                reject(msgToClient); 
             } else { 
-                if(result != 0) {
-                    massive_friends=result[0].list_friends.split(',');
-                } else { 
-                    massive_friends=[];
-                }
+                if(result[0]?.list_friends != null) 
+                    massive_friends = result[0].list_friends.split(',');
+                 else 
+                    massive_friends = [];
+            
                 massive_friends.push(friendNumber);
                 conn.query(`UPDATE user_table SET list_friends ='${massive_friends.toString()}' where phone_number='${myNumber}'`, (err, result) => {
                 if(err) {
@@ -240,9 +240,9 @@ async function AcceptFriend(myNumber, friendNumber) {
                             while(i < result_json_out.requests.length && result_json_out.requests[i].phoneNumber != friendNumber)
                                 i++;
 
-                            if(i<result_json_out.requests.length) {
+                            if(i < result_json_out.requests.length)
                                 result_json_out.requests.splice(i, 1);
-                            }
+                            
 
                             conn.query(`UPDATE user_table SET out_friend_req ='${JSON.stringify(result_json_out)}' where phone_number='${myNumber}'`, (err, result) => {
                                 if(err) {
@@ -277,7 +277,7 @@ async function AcceptFriend(myNumber, friendNumber) {
                                                     reject(msgToClient); 
                                                 } else {
                                                     const msgToClient = {
-                                                        typeRequest: 'AddFriend'
+                                                        typeRequest: 'friendSuccessfulAccepted'
                                                     };
                                                     resolve(msgToClient);
                                                 }
@@ -395,7 +395,7 @@ async function RequestFrined(myNumber, friendNumber, comment, myAvatar, myUserna
                             };
                             reject(msgToClient); 
                         } else if(result.length >= 0) {
-                            if(result.length != 0) {
+                            if(result.length != 0 && result[0].list_friends != null) {
                                 const massive_friends = result[0].list_friends.split(',');  // список друзей
                                 let i=0;
                                 while(i < massive_friends.length && massive_friends[i] != friendNumber)
@@ -429,12 +429,14 @@ async function RequestFrined(myNumber, friendNumber, comment, myAvatar, myUserna
                                         comment: comment,
                                         username: myUsername
                                     };
-
+                                    console.log('////');
+                                    console.dir(in_request);
+                                    console.log('////');
                                     
                                     let result_json_in; 
                                     if(result[0].in_friend_req != null) {
                                         result_json_in = JSON.parse(result[0].in_friend_req);
-                                        result_json_in.requests.push(in_request);// вопрос?
+                                        result_json_in.requests.push(in_request);
                                     } else {
                                         result_json_in = {requests: []};
                                         result_json_in.requests.push(in_request);
@@ -497,7 +499,7 @@ async function RequestFrined(myNumber, friendNumber, comment, myAvatar, myUserna
                                                                 friend: false,
                                                                 username: username,
                                                                 avatar: avatar,
-                                                                number: friendNumber,
+                                                                phoneNumber: friendNumber,
                                                                 comment: comment
                                                             };
 
@@ -730,20 +732,18 @@ async function RejectFriendRequest(myNumber, friendNumber) {
                                         message: 'Ошибка подключения к базе данных!',
                                     };
                                     reject(msgToClient);     
-                                }else
-                                {
+                                } else {
                                     result_json_in = JSON.parse(result[0].in_friend_req);
-                                    console.log(result_json_in);////
-                                    let i=0;
+                                    console.log(result_json_in);
+                                    let i = 0;
                                     while(i<result_json_in.requests.length && result_json_in.requests[i].phoneNumber!=myNumber)
                                         i++;
-                                    if(i<result_json_in.requests.length)
-                                    {
-                                        result_json_in.requests.splice(i,1);
-                                    }
+
+                                    if(i < result_json_in.requests.length)
+                                        result_json_in.requests.splice(i, 1);
+
                                     conn.query(`UPDATE user_table SET in_friend_req ='${JSON.stringify(result_json_in)}' where phone_number='${friendNumber}'`, (err, result) => {
-                                        if(err)
-                                        {
+                                        if(err) {
                                             const msgToClient = {
                                                 typeRequest: 'err',
                                                 message: 'Ошибка подключения к базе данных!',
@@ -751,9 +751,10 @@ async function RejectFriendRequest(myNumber, friendNumber) {
                                             reject(msgToClient); 
                                         } else {
                                             const msgToClient = {
-                                                typeRequest: 'rejectFriend'
-                                            }
-
+                                                typeRequest: 'rejectFriend',
+                                                receiver: friendNumber,
+                                                sender: myNumber
+                                            };
                                             resolve(msgToClient);
                                         }
                                     });

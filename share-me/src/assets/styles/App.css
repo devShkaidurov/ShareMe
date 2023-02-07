@@ -51,7 +51,7 @@
 .text_ {
   color: #61dafb;
   font-weight: 400;
-  font-family: cursive;
+  font-family: emoji;
   font-size: xx-large;
   transition: 1s;
 }
@@ -65,7 +65,7 @@
   font-weight: bold;
   font-size: smaller;
   cursor: auto;
-  font-family: cursive;
+  font-family: emoji;
   background: #d5eaf0;
   transition: 0.5s;
   width: 75%;

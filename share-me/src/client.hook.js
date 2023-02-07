@@ -49,6 +49,7 @@ export const useClientHook = () => {
             break;
 
             case 'infoAboutFriends':
+                console.dir(answer.data);
                 console.warn(answer.data);
                 setInfoAboutFriends(answer.data);
             break;
@@ -83,7 +84,6 @@ export const useClientHook = () => {
 
             case 'friendDeleted':
                 getFriends(phoneNumber);
-                console.dir(answer);
             break;
 
             case 'rejectFriend':
@@ -97,6 +97,28 @@ export const useClientHook = () => {
 
             case 'friendSuccessfulAccepted':
                 console.dir(answer);
+                setInfoAboutFriends(prevState => {
+                    if(prevState) {
+                        return [...prevState, {
+                            avatar: answer?.data?.avatar,
+                            username: answer?.data?.username,
+                            phone_number: answer?.data?.phoneNumber,
+                            lat: answer?.data?.lat,
+                            lon: answer?.data?.lon
+                        }]
+                    } else {
+                        return [{
+                            avatar: answer?.data?.avatar,
+                            username: answer?.data?.username,
+                            phone_number: answer?.data?.phoneNumber,
+                            lat: answer?.data?.lat,
+                            lon: answer?.data?.lon
+                        }]
+                    }
+                });
+
+                setInReqFriends(prevState => prevState.filter(item => item.phoneNumber != answer?.data?.phoneNumber));
+
             break;
 
 

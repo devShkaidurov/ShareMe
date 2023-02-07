@@ -28,6 +28,11 @@
     z-index: 1000;
     width: 35vw;
     height: 50vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-width: 250px;
 }
 
 .modal_content.active { 

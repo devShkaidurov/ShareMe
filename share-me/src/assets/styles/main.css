@@ -88,7 +88,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-family: cursive;
+  font-family: emoji;
 }
 
 .divider {
@@ -135,7 +135,7 @@ h1 {
 }
 
 #label_to_add_friend {
-  font-family: cursive;
+  font-family: emoji;
 }
 
 .style_for_icon {
@@ -159,13 +159,14 @@ h1 {
 
 #title_modal {
   font-size: 20pt;
-  font-family: cursive;
+  font-family: emoji;
   color: #FAF825;
+  text-align: center;
 }
 
 #number_modal {
   font-size: 15pt;
-  font-family: cursive;
+  font-family: emoji;
   color: #FAF825;
 }
 
@@ -174,30 +175,32 @@ h1 {
   height: 25px;
   color: rgb(23, 151, 72);
   font-size: 15pt;
-  font-family: cursive;
+  font-family: emoji;
   margin-left: 10px;;
 }
 
 #comment_modal {
   font-size: 15pt;
-  font-family: cursive;
+  font-family: emoji;
   color: #FAF825;
   margin-left: 10px;
+  text-align: center;
 }
 
 #inputComment_modal {
-  width: 300px;
+  width: 80%;
   height: 50px;
   color: rgb(23, 151, 72);
   font-size: 15pt;
-  font-family: cursive;
+  font-family: emoji;
 }
 
 #btn_modal {
   width: 250px;
   height: 40px;
-  font-family: cursive;
+  font-family: emoji;
   font-size: 13pt;
+  -webkit-font-feature-settings: "c2cs";
   background-color: #F0D024;
 }
 
@@ -217,7 +220,7 @@ h1 {
 
 .labelForOutRequest {
   margin-bottom: 5px;
-  font-family: cursive;
+  font-family: emoji;
   font-size: 12pt;
   width: 100%;
   display: flex;
@@ -250,33 +253,48 @@ h1 {
 #label_welcome {
   position: absolute;
   z-index: 1000;
-  left: 5%;
   top: 2%;
-  font-family: cursive;
-  font-size: 23pt;
+  font-family: emoji;
+  font-size: 3vh;
   padding: 10px;
   background: linear-gradient(90deg, rgba(255,255,255,0) 0%, #93d397 10%, #dfece0 90%, rgba(255,255,255,0) 100%);
+  width: 98%;
+  display: flex;
+  justify-content: center;
+  animation: labelWelcomeInviziabling 2s;
+  animation-timing-function: linear;
+  opacity: 0;
+}
+
+@keyframes labelWelcomeInviziabling {
+    0% { 
+      opacity: 1;
+  }
+
+  100% { 
+      opacity: 0;
+  }
 }
 
 .username_open_friend {
   font-size: 18pt;
-  font-family: cursive;
+  font-family: emoji;
 }
 
 .phoneNumber_open_friend {
   font-size: 18pt;
-  font-family: cursive;
+  font-family: emoji;
 }
 
 .comment_open_friend {
   font-size: 18pt;
-  font-family: cursive;
+  font-family: emoji;
 }
 
 .sendMsg_open_friend {
   width: 250px;
   height: 40px;
-  font-family: cursive;
+  font-family: emoji;
   font-size: 13pt;
   background-color: #F0D024;
 }
@@ -296,4 +314,57 @@ h1 {
   height: 100%;
   display: flex;
   align-items: center;
+}
+
+.iconForMenuFriend {
+  position: absolute;
+  z-index: 1000000;
+  right: 25px;
+  top: 25px;
+  background: #94ed78;
+  border: solid 1px #3ccc0e;
+  border-radius: 32%;
+  opacity: 1;
+}
+
+.animation-menu-friend {
+  animation: iconFriend cubic-bezier(0.7, 0, 0.84, 0) 1s;
+}
+
+.closeBtnMenuFriend {
+  display: flex;
+  border-radius: 35%;
+  rotate: 180deg;
+  position: fixed;
+  top: 0%;
+  background: #2f8407;
+  align-items: center;
+}
+
+.closeBtnMenuFriend:hover {
+  scale: 1.1
+}
+
+.iconForMenuFriend:hover {
+  scale: 1.1
+}
+
+@keyframes iconFriend {
+  0% { 
+    opacity: 0;
+}
+
+100% { 
+    opacity: 1;
+}
+}
+
+@keyframes iconFriend2 {
+  0% { 
+    opacity: 0;
+}
+
+100% { 
+    opacity: 1;
+}
 }

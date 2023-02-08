@@ -1,0 +1,370 @@
+#map {
+    height: 100vh;
+    width: 100vw;
+}
+
+#container {
+    overflow: hidden;
+}
+
+h1 {
+    position: absolute;
+    height: 500px;
+    width: 500px;
+    z-index: 15;
+}
+
+#listFriends {
+  position: absolute;
+  top: 0.8%;
+  right: 0.4%;
+  width: 200px;
+  height: 25%;
+  z-index: 999;
+  background: #64a868;
+  border: solid 1px #64a868;
+  border-radius: 9px;
+  box-shadow: -2px 2px 10px #7d885e;
+  overflow: auto;
+
+}
+
+#listFriends::-webkit-scrollbar {
+	width: 10px;
+}
+
+#listFriends::-webkit-scrollbar-track {
+	box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	background-color: rgba(224, 227, 229, 0.5);
+    border-radius: 5px;
+}
+
+#listFriends::-webkit-scrollbar-thumb {
+	background-color: rgb(15 107 51);
+	border-radius: 5px;
+	box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border: 1px solid rgba(224, 227, 229, 0.5);
+}
+
+.row {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  cursor: pointer;
+}
+
+.row:hover {
+  animation: bluring infinite 2s linear;
+}
+
+@keyframes bluring {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    background-color: #00a11634;
+    border-radius: 5px;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.avatar {
+  position: relative;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+}
+
+.username {
+  position: relative;
+  width: calc(100% - 50px);
+  height: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-family: emoji;
+}
+
+.divider {
+  position: relative;
+  width: 90%;
+  height: 1px;
+  background-color: #327c3669;
+  left: 5%;
+}
+
+#row_to_add_friend {
+  position: absolute;
+  top: 27%;
+  right: 0.4%;
+  width: 200px;
+  height: 35px;
+  border: solid 1px #a8b28a;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  background-color: #64a868;
+  z-index: 999;
+  border-radius: 5px;
+  transition: 0.1s;
+}
+
+#row_to_add_friend:hover {
+  width: 200px;
+  height: 35px;
+  background-color: #93D397;
+  transition: 0.3s;
+}
+
+#row_to_add_friend:active {
+  background-color: #64A868;
+}
+
+#row_to_add_friend:active:nth-child(2) {
+  color: #216D26;
+}
+
+#img_to_add_friend {
+  margin-top: 5px;
+}
+
+#label_to_add_friend {
+  font-family: emoji;
+}
+
+.style_for_icon {
+  border-radius: 15px;
+  border: solid white 2px;
+}
+
+/* STYLES FOR MODAL WINDOW */
+
+#container_modal {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgb(23, 151, 72);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+#title_modal {
+  font-size: 20pt;
+  font-family: emoji;
+  color: #FAF825;
+  text-align: center;
+}
+
+#number_modal {
+  font-size: 15pt;
+  font-family: emoji;
+  color: #FAF825;
+}
+
+#inputNumber_modal {
+  width: 150px;
+  height: 25px;
+  color: rgb(23, 151, 72);
+  font-size: 15pt;
+  font-family: emoji;
+  margin-left: 10px;;
+}
+
+#comment_modal {
+  font-size: 15pt;
+  font-family: emoji;
+  color: #FAF825;
+  margin-left: 10px;
+  text-align: center;
+}
+
+#inputComment_modal {
+  width: 80%;
+  height: 50px;
+  color: rgb(23, 151, 72);
+  font-size: 15pt;
+  font-family: emoji;
+}
+
+#btn_modal {
+  width: 250px;
+  height: 40px;
+  font-family: emoji;
+  font-size: 13pt;
+  -webkit-font-feature-settings: "c2cs";
+  background-color: #F0D024;
+}
+
+.wrapper_modal {
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-direction: column;
+}
+
+.pendingFriend {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.labelForOutRequest {
+  margin-bottom: 5px;
+  font-family: emoji;
+  font-size: 12pt;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.container_open_friend {
+  background-color: #93D397;
+  height: 100%;
+  width: 100%;
+  position: absolute;    
+  border-radius: 10px;
+  border: solid 1px #577b59;
+  -webkit-box-shadow: -1px 1px 14px 2px rgb(0 0 0 / 75%);
+  -moz-box-shadow: -1px 1px 14px 2px rgb(0 0 0 / 75%);
+  box-shadow: -1px 1px 14px 2px rgb(0 0 0 / 75%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+.avatar_open_friend {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: solid 2px #53ff00;
+}
+
+#label_welcome {
+  position: absolute;
+  z-index: 1000;
+  top: 2%;
+  font-family: emoji;
+  font-size: 3vh;
+  padding: 10px;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, #93d397 10%, #dfece0 90%, rgba(255,255,255,0) 100%);
+  width: 98%;
+  display: flex;
+  justify-content: center;
+  animation: labelWelcomeInviziabling 2s;
+  animation-timing-function: linear;
+  opacity: 0;
+}
+
+@keyframes labelWelcomeInviziabling {
+    0% { 
+      opacity: 1;
+  }
+
+  100% { 
+      opacity: 0;
+  }
+}
+
+.username_open_friend {
+  font-size: 18pt;
+  font-family: emoji;
+}
+
+.phoneNumber_open_friend {
+  font-size: 18pt;
+  font-family: emoji;
+}
+
+.comment_open_friend {
+  font-size: 18pt;
+  font-family: emoji;
+}
+
+.sendMsg_open_friend {
+  width: 250px;
+  height: 40px;
+  font-family: emoji;
+  font-size: 13pt;
+  background-color: #F0D024;
+}
+
+#viewDiv {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.btnCancel {
+  border: none;
+  background: none;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.iconForMenuFriend {
+  position: absolute;
+  z-index: 1000000;
+  right: 25px;
+  top: 25px;
+  background: #94ed78;
+  border: solid 1px #3ccc0e;
+  border-radius: 32%;
+  opacity: 1;
+}
+
+.animation-menu-friend {
+  animation: iconFriend cubic-bezier(0.7, 0, 0.84, 0) 1s;
+}
+
+.closeBtnMenuFriend {
+  display: flex;
+  border-radius: 35%;
+  rotate: 180deg;
+  position: fixed;
+  top: 0%;
+  background: #2f8407;
+  align-items: center;
+}
+
+.closeBtnMenuFriend:hover {
+  scale: 1.1
+}
+
+.iconForMenuFriend:hover {
+  scale: 1.1
+}
+
+@keyframes iconFriend {
+  0% { 
+    opacity: 0;
+}
+
+100% { 
+    opacity: 1;
+}
+}
+
+@keyframes iconFriend2 {
+  0% { 
+    opacity: 0;
+}
+
+100% { 
+    opacity: 1;
+}
+}
